@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Scissors, Clock, Users, AlertCircle } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { collection, query, where, onSnapshot as onSnapshotCollection } from 'firebase/firestore';
+import InstallPWA from '@/components/installPWA';
 import { db } from '@/lib/firebase';
 
 // ===== COMPONENT 1: STATUS BANNER =====
@@ -569,6 +570,7 @@ export default function BarberQueueClient() {
         
         {/* Info / Rules */}
         <InfoRules avgServiceTime={avgServiceTime} />
+        <InstallPWA />
         
         {/* Footer */}
         <div className="text-center pt-4">
