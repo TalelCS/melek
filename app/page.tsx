@@ -8,6 +8,8 @@ import { Scissors, Clock, Users, AlertCircle } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { collection, query, where, onSnapshot as onSnapshotCollection } from 'firebase/firestore';
 import InstallPWA from '@/components/installPWA';
+import NotificationPrompt from '@/components/NotificationPrompt';
+import { QueueNotifications, canSendNotifications } from '@/lib/notifications';
 import { db } from '@/lib/firebase';
 
 // ===== COMPONENT 1: STATUS BANNER =====
@@ -247,6 +249,9 @@ export default function BarberQueueClient() {
   const [avgServiceTime, setAvgServiceTime] = useState(15);
   const [peopleAhead, setPeopleAhead] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const [notificationsGranted, setNotificationsGranted] = useState(false);
+  const [lastNotifiedState, setLastNotifiedState] = useState<'none' | 'almost' | 'next'>('none');
   
   // ===== COMPUTED VALUES (NOT STATE) =====
   const estimatedWait = peopleAhead * avgServiceTime;
@@ -306,6 +311,40 @@ export default function BarberQueueClient() {
   
     return () => unsubscribe();
   }, []);  
+
+  useEffect(() => {
+    if (!inQueue || !notificationsGranted || !canSendNotifications()) {
+      return;
+    }
+  
+    // Determine current state
+    let currentState: 'none' | 'almost' | 'next' = 'none';
+    
+    if (peopleAhead === 0) {
+      currentState = 'next';
+    } else if (peopleAhead <= 2) {
+      currentState = 'almost';
+    }
+  
+    // Only notify on state changes
+    if (currentState === lastNotifiedState) {
+      return;
+    }
+  
+    // Send appropriate notification
+    if (currentState === 'next' && lastNotifiedState !== 'next') {
+      QueueNotifications.notifyNext(userName, userPosition || 0);
+      setLastNotifiedState('next');
+    } else if (currentState === 'almost' && lastNotifiedState === 'none') {
+      QueueNotifications.notifyAlmostNext(userName, userPosition || 0, peopleAhead);
+      setLastNotifiedState('almost');
+    }
+  
+    // Reset state when moving away from critical positions
+    if (currentState === 'none' && lastNotifiedState !== 'none') {
+      setLastNotifiedState('none');
+    }
+  }, [peopleAhead, inQueue, notificationsGranted, userName, userPosition, lastNotifiedState]);
 
   useEffect(() => {
     const q = query(
@@ -579,6 +618,16 @@ export default function BarberQueueClient() {
           </p>
         </div>
       </div>
+      {/* Add NotificationPrompt - only show when user joins queue */}
+      {inQueue && (
+        <NotificationPrompt
+          userName={userName}
+          onPermissionChange={(granted) => {
+            setNotificationsGranted(granted);
+            console.log('Notifications:', granted ? 'enabled' : 'disabled');
+          }}
+        />
+      )}
     </div>
   );
 }
