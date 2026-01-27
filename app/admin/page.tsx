@@ -88,7 +88,7 @@ function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQu
 }
 
 // ===== COMPONENT 3: CURRENT CLIENT (BIG) =====
-function CurrentClient({ client, onDone, onSkip, loading }) {
+function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
   if (!client) {
     return (
       <Card className="shadow-lg border-2 border-slate-300">
@@ -101,6 +101,8 @@ function CurrentClient({ client, onDone, onSkip, loading }) {
     );
   }
   
+  const fullName = `${client.firstName} ${client.lastName}`;
+  
   return (
     <Card className="shadow-lg border-4 border-blue-500 bg-blue-50">
       <CardHeader className="pb-3">
@@ -110,16 +112,19 @@ function CurrentClient({ client, onDone, onSkip, loading }) {
       </CardHeader>
       
       <CardContent>
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <div className="text-7xl font-bold text-slate-800 mb-2">
             #{client.number}
           </div>
           <div className="text-3xl font-semibold text-slate-700">
-            {client.name}
+            {fullName}
+          </div>
+          <div className="text-lg text-slate-500 mt-2">
+            📱 {client.phoneNumber}
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3 mb-3">
           <Button
             onClick={onDone}
             disabled={loading}
@@ -137,6 +142,15 @@ function CurrentClient({ client, onDone, onSkip, loading }) {
           >
             <SkipForward className="w-6 h-6 mr-2" />
             {loading ? 'Processing...' : 'Skip'}
+          </Button>
+          
+          <Button
+            onClick={() => onCall(client)}
+            disabled={loading}
+            className="h-16 text-lg font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          >
+            <PhoneCall className="w-6 h-6 mr-2" />
+            Call
           </Button>
         </div>
       </CardContent>
@@ -170,31 +184,39 @@ function WaitingList({ clients, onCallClient, loading }) {
       
       <CardContent>
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {clients.map((client) => (
-            <div
-              key={client.id}
-              className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="text-3xl font-bold text-slate-700 w-16">
-                  #{client.number}
-                </div>
-                <div className="text-xl font-semibold text-slate-800">
-                  {client.name}
-                </div>
-              </div>
-              
-              <Button
-                onClick={() => onCallClient(client)}
-                disabled={loading}
-                variant="outline"
-                className="h-12 px-6 border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-semibold disabled:opacity-50"
+          {clients.map((client) => {
+            const fullName = `${client.firstName} ${client.lastName}`;
+            return (
+              <div
+                key={client.id}
+                className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
               >
-                <PhoneCall className="w-4 h-4 mr-2" />
-                Call
-              </Button>
-            </div>
-          ))}
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl font-bold text-slate-700 w-16">
+                    #{client.number}
+                  </div>
+                  <div>
+                    <div className="text-xl font-semibold text-slate-800">
+                      {fullName}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      📱 {client.phoneNumber}
+                    </div>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => onCallClient(client)}
+                  disabled={loading}
+                  variant="outline"
+                  className="h-12 px-6 border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-semibold disabled:opacity-50"
+                >
+                  <PhoneCall className="w-4 h-4 mr-2" />
+                  Call
+                </Button>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -486,7 +508,7 @@ export default function BarberQueueAdmin() {
         });
       });
       
-      console.log(`✅ ${currentClient.name} marked as done`);
+      console.log(`✅ ${currentClient.firstName} ${currentClient.lastName} marked as done`);
       
     } catch (error) {
       console.error('❌ Failed to mark as done:', error);
@@ -499,7 +521,9 @@ export default function BarberQueueAdmin() {
   const handleSkip = async () => {
     if (!currentClient || actionLoading) return;
     
-    if (!confirm(`⚠️ Skip ${currentClient.name}? They will be moved behind the next person in line.`)) return;
+    const fullName = `${currentClient.firstName} ${currentClient.lastName}`;
+    
+    if (!confirm(`⚠️ Skip ${fullName}? They will be moved behind the next person in line.`)) return;
     
     try {
       setActionLoading(true);
@@ -526,28 +550,28 @@ export default function BarberQueueAdmin() {
       const nextClient = nextClientSnapshot.docs[0];
       const nextClientRef = doc(db, "queues", "today", "clients", nextClient.id);
       const nextClientNumber = nextClient.data().number;
+      const nextClientFullName = `${nextClient.data().firstName} ${nextClient.data().lastName}`;
       
       await runTransaction(db, async (transaction) => {
-        // Current client (e.g., Ahmed #3) takes next client's number (e.g., #4)
+        // Current client takes next client's number
         transaction.update(clientRef, {
           number: nextClientNumber,
           skippedAt: serverTimestamp()
         });
         
-        // Next client (e.g., Aziz #4) takes current client's number (e.g., #3)
+        // Next client takes current client's number
         transaction.update(nextClientRef, {
           number: currentNumber
         });
         
         // Queue doesn't move forward - it stays at current number
-        // because the next person now has this number
         transaction.update(queueRef, {
           updatedAt: serverTimestamp()
         });
       });
       
-      console.log(`⚠️ ${currentClient.name} swapped with ${nextClient.data().name}`);
-      alert(`⚠️ ${currentClient.name} (#${currentNumber}) is now #${nextClientNumber}\n${nextClient.data().name} (#${nextClientNumber}) is now #${currentNumber}`);
+      console.log(`⚠️ ${fullName} swapped with ${nextClientFullName}`);
+      alert(`⚠️ ${fullName} (#${currentNumber}) is now #${nextClientNumber}\n${nextClientFullName} (#${nextClientNumber}) is now #${currentNumber}`);
       
     } catch (error) {
       console.error('❌ Failed to skip:', error);
@@ -557,31 +581,19 @@ export default function BarberQueueAdmin() {
     }
   };
   
-  
   const handleCallClient = async (client) => {
     if (actionLoading) return;
     
-    if (!confirm(`📢 Call ${client.name} (#${client.number})? This is just a notification and won't affect the queue order.`)) return;
+    const fullName = `${client.firstName} ${client.lastName}`;
+    const phoneNumber = client.phoneNumber;
     
-    try {
-      setActionLoading(true);
-      
-      // TODO: In the future, this could trigger:
-      // - SMS notification
-      // - Display on a screen
-      // - Sound alert
-      // For now, just show an alert
-      
-      alert(`📢 Calling ${client.name} (#${client.number})!\n\nThis is a manual call. The queue order remains unchanged.`);
-      
-      console.log(`📢 Called ${client.name} (#${client.number})`);
-      
-    } catch (error) {
-      console.error('❌ Failed to call client:', error);
-      alert('Failed to call client. Please try again.');
-    } finally {
-      setActionLoading(false);
-    }
+    // Create tel: link for calling
+    const telLink = `tel:${phoneNumber}`;
+    
+    // Open phone dialer
+    window.location.href = telLink;
+    
+    console.log(`📢 Calling ${fullName} at ${phoneNumber}`);
   };
   
   // ===== RENDER =====
@@ -619,6 +631,7 @@ export default function BarberQueueAdmin() {
           client={currentClient}
           onDone={handleDone}
           onSkip={handleSkip}
+          onCall={handleCallClient}
           loading={actionLoading}
         />
         
@@ -640,7 +653,7 @@ export default function BarberQueueAdmin() {
         <Alert className="bg-blue-50 border-blue-200">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800 text-sm">
-            💡 <strong>Workflow:</strong> Press "Start Service" to begin. Tap "Done" after each client. Use "Call" to notify specific clients without changing queue order.
+            💡 <strong>Workflow:</strong> Press "Start Service" to begin. Tap "Done" after each client. Use "Call" to dial client's phone number.
           </AlertDescription>
         </Alert>
         

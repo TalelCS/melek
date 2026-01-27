@@ -21,7 +21,7 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
       return {
         icon: '🌙',
         text: 'Queue is closed',
-        className: 'bg-gradient-to-r from-rose-50 to-orange-50 border-rose-300 text-rose-900'
+        className: 'bg-red-500/10 backdrop-blur-md border border-red-500/20 text-red-200'
       };
     }
     
@@ -29,7 +29,7 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
       return {
         icon: '✨',
         text: "You're being served - Please come to the shop!",
-        className: 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-400 text-emerald-900'
+        className: 'bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-emerald-200'
       };
     }
     
@@ -37,14 +37,14 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
       return {
         icon: '⭐',
         text: 'Almost your turn - Please come to the shop',
-        className: 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-400 text-amber-900'
+        className: 'bg-amber-500/10 backdrop-blur-md border border-amber-500/20 text-amber-200'
       };
     }
     
     return {
       icon: '🌟',
       text: 'Queue is open - Join now',
-      className: 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-300 text-emerald-900'
+      className: 'bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-emerald-200'
     };
   };
   
@@ -60,53 +60,96 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
 }
 
 // ===== COMPONENT 2: JOIN QUEUE FORM =====
-function JoinQueueForm({ userName, setUserName, queueOpen, onJoin }) {
+function JoinQueueForm({ firstName, setFirstName, lastName, setLastName, phoneNumber, setPhoneNumber, queueOpen, onJoin }) {
   const handleSubmit = () => {
-    if (userName.trim() && queueOpen) {
+    // Validate Tunisian phone number (8 digits)
+    const isValidPhone = /^\d{8}$/.test(phoneNumber);
+    if (firstName.trim() && lastName.trim() && isValidPhone && queueOpen) {
       onJoin();
     }
   };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Only allow numbers and limit to 8 digits
+    if (/^\d{0,8}$/.test(value)) {
+      setPhoneNumber(value);
+    }
+  };
+
+  const isValidPhone = /^\d{8}$/.test(phoneNumber);
   
   return (
-    <Card className="shadow-xl border-2 border-amber-200/50 bg-gradient-to-br from-white to-amber-50/30 overflow-hidden relative">
-      {/* Decorative Islamic Pattern Corner */}
-      <div className="absolute top-0 right-0 w-24 h-24 opacity-5">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
-          <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
-          <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
-          <circle cx="50" cy="50" r="10" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
-        </svg>
-      </div>
-      
-      <CardHeader className="pb-4 relative">
-        <CardTitle className="text-center text-xl text-emerald-900">
-          🌙 Join Today's Queue
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-center text-2xl text-white">
+          Join Today's Queue
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="relative">
+      <CardContent>
         <div className="space-y-4">
+          {/* First and Last Name - Side by Side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-white/80 mb-2">
+                First Name
+              </label>
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-amber-500/50 focus:ring-amber-500/50"
+                disabled={!queueOpen}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-white/80 mb-2">
+                Last Name
+              </label>
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-amber-500/50 focus:ring-amber-500/50"
+                disabled={!queueOpen}
+              />
+            </div>
+          </div>
+
+          {/* Phone Number - Full Width Below */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-emerald-800 mb-2">
-              Your Name
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-white/80 mb-2">
+              Phone Number
             </label>
             <Input
-              id="name"
-              type="text"
-              placeholder="Enter your name"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              className="text-lg h-12 border-emerald-200 focus:border-amber-400 focus:ring-amber-400"
+              id="phoneNumber"
+              type="tel"
+              placeholder="12345678"
+              value={phoneNumber}
+              onChange={handlePhoneChange}
+              className={`bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-amber-500/50 focus:ring-amber-500/50 ${
+                phoneNumber && !isValidPhone ? 'border-red-500/50' : ''
+              }`}
               disabled={!queueOpen}
+              maxLength={8}
             />
+            {phoneNumber && !isValidPhone && (
+              <p className="text-xs text-red-400 mt-1">
+                Phone number must be exactly 8 digits
+              </p>
+            )}
           </div>
           
           <Button
             onClick={handleSubmit}
-            disabled={!userName.trim() || !queueOpen}
-            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-300 hover:to-yellow-400 hover:from-emerald-800 hover:to-emerald-700 shadow-lg"
+            disabled={!firstName.trim() || !lastName.trim() || !isValidPhone || !queueOpen}
+            className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black hover:from-amber-400 hover:to-yellow-400 shadow-lg disabled:opacity-50"
           >
             Join Queue ✨
           </Button>
@@ -117,44 +160,40 @@ function JoinQueueForm({ userName, setUserName, queueOpen, onJoin }) {
 }
 
 // ===== COMPONENT 3: QUEUE STATUS =====
-function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLeave }) {
+function QueueStatus({ firstName, lastName, phoneNumber, userPosition, peopleAhead, estimatedWait, onLeave }) {
   return (
-    <Card className="shadow-xl border-2 border-amber-200/50 bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden relative">
-      {/* Decorative stars */}
-      <div className="absolute top-2 left-2 text-yellow-300 opacity-20 text-2xl">✨</div>
-      <div className="absolute top-4 right-4 text-yellow-300 opacity-20 text-xl">⭐</div>
-      <div className="absolute bottom-4 left-6 text-yellow-300 opacity-20 text-lg">🌟</div>
-      
-      <CardHeader className="pb-4 relative">
-        <CardTitle className="text-center text-xl text-emerald-900">
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-center text-2xl text-white">
           You're in the queue ✅
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="relative">
+      <CardContent>
         <div className="space-y-6">
           {/* Queue Position - Big Number */}
           <div className="text-center">
-            <p className="text-sm text-emerald-700 mb-1">Your number</p>
-            <div className="text-6xl font-bold bg-gradient-to-br from-yellow-400 to-yellow-500 bg-clip-text text-transparent my-3">
+            <p className="text-sm text-white/60 mb-2">Your number</p>
+            <div className="text-7xl font-bold bg-gradient-to-br from-amber-400 to-yellow-500 bg-clip-text text-transparent my-4">
               #{userPosition}
             </div>
-            <p className="text-xs text-emerald-600">Joined as {userName}</p>
+            <p className="text-sm text-white/80">{firstName} {lastName}</p>
+            <p className="text-xs text-white/60">{phoneNumber}</p>
           </div>
           
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 text-white/80 rounded-lg p-4 text-center border border-emerald-100">
-              <Users className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
-              <p className="text-sm text-emerald-700 mb-1">People before you</p>
-              <p className="text-3xl font-bold text-emerald-900">{peopleAhead}</p>
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+              <Users className="w-6 h-6 text-amber-400 mx-auto mb-2" />
+              <p className="text-xs text-white/60 mb-1">People before you</p>
+              <p className="text-3xl font-bold text-white">{peopleAhead}</p>
             </div>
             
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 text-center border border-amber-100">
-              <Clock className="w-6 h-6 text-amber-600 mx-auto mb-2" />
-              <p className="text-sm text-amber-700 mb-1">Estimated wait</p>
-              <p className="text-3xl font-bold text-amber-900">~{estimatedWait}</p>
-              <p className="text-xs text-amber-600">minutes</p>
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-lg p-4 text-center">
+              <Clock className="w-6 h-6 text-amber-400 mx-auto mb-2" />
+              <p className="text-xs text-white/60 mb-1">Estimated wait</p>
+              <p className="text-3xl font-bold text-white">~{estimatedWait}</p>
+              <p className="text-xs text-white/60">minutes</p>
             </div>
           </div>
           
@@ -162,7 +201,7 @@ function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLea
           <Button
             onClick={onLeave}
             variant="outline"
-            className="w-full text-rose-600 border-rose-200 hover:bg-rose-50"
+            className="w-full bg-white/5 border-white/20 text-white/80 hover:bg-red-500/20 hover:border-red-500/30 hover:text-red-200"
           >
             Leave Queue
           </Button>
@@ -175,23 +214,23 @@ function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLea
 // ===== COMPONENT 4: PROGRESS SECTION =====
 function ProgressSection({ currentServing, totalInQueue, progress }) {
   return (
-    <Card className="shadow-md border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/20">
-      <CardContent className="pt-6">
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+      <CardContent>
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-emerald-700">Currently serving:</span>
-            <span className="font-bold text-emerald-900 text-lg">#{currentServing}</span>
+            <span className="text-white/60">Currently serving:</span>
+            <span className="font-bold text-white text-xl">#{currentServing}</span>
           </div>
           
           {/* Progress Bar */}
-          <div className="w-full bg-emerald-100 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-full rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
           
-          <p className="text-xs text-emerald-600 text-center">
+          <p className="text-xs text-white/60 text-center">
             {currentServing} of {totalInQueue} served today
           </p>
         </div>
@@ -203,19 +242,19 @@ function ProgressSection({ currentServing, totalInQueue, progress }) {
 // ===== COMPONENT 5: INFO / RULES =====
 function InfoRules({ avgServiceTime }) {
   return (
-    <Card className="bg-white/5 backdrop-blur-md border border-white/10 text-white/80 border-emerald-200">
-      <CardContent className="pt-6">
-        <div className="space-y-2 text-xs text-emerald-800">
-          <div className="flex items-start gap-2">
-            <span className="text-amber-500">🌙</span>
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10">
+      <CardContent>
+        <div className="space-y-2 text-sm text-white/70">
+          <div className="flex items-start gap-3">
+            <span className="text-amber-400">🌙</span>
             <span>Queue resets daily at midnight</span>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-amber-500">⭐</span>
+          <div className="flex items-start gap-3">
+            <span className="text-amber-400">⭐</span>
             <span>Missing your turn may skip your position</span>
           </div>
-          <div className="flex items-start gap-2">
-            <span className="text-amber-500">✨</span>
+          <div className="flex items-start gap-3">
+            <span className="text-amber-400">✨</span>
             <span>Average service time: {avgServiceTime} minutes</span>
           </div>
         </div>
@@ -229,9 +268,9 @@ function CallToActionHint({ isNext, isAlmostNext }) {
   if (!isNext && !isAlmostNext) return null;
   
   return (
-    <Alert className="bg-amber-50 border-amber-200">
-      <AlertCircle className="h-4 w-4 text-amber-600" />
-      <AlertDescription className="text-amber-800">
+    <Alert className="bg-amber-500/10 backdrop-blur-md border border-amber-500/20">
+      <AlertCircle className="h-4 w-4 text-amber-400" />
+      <AlertDescription className="text-amber-200">
         {isNext 
           ? "🎉 You're next! Please come to the shop now."
           : "⏰ You can come in ~15 minutes. Please stay nearby."}
@@ -240,23 +279,14 @@ function CallToActionHint({ isNext, isAlmostNext }) {
   );
 }
 
-// ===== COMPONENT 7: DEBUG PANEL =====
-function DebugPanel({ clientId, userPosition, currentServing, peopleAhead, estimatedWait, progress }) {
-  return (
-    <div className="bg-emerald-900 text-white p-3 rounded text-xs font-mono space-y-1 border border-amber-400/30">
-      <div>Client ID: {clientId.slice(0, 8)}...</div>
-      <div>Position: {userPosition} | Serving: {currentServing} | Ahead: {peopleAhead}</div>
-      <div>Wait: ~{estimatedWait}min | Progress: {progress.toFixed(1)}%</div>
-    </div>
-  );
-}
-
 // ===== MAIN APP COMPONENT =====
 export default function BarberQueueClient() {
   // ===== SOURCE OF TRUTH STATE ONLY =====
   const [queueOpen, setQueueOpen] = useState(true);
   const [inQueue, setInQueue] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [clientId, setClientId] = useState('');
   
   // Core queue data (from Firebase)
@@ -347,17 +377,17 @@ export default function BarberQueueClient() {
     }
   
     if (currentState === 'next' && lastNotifiedState !== 'next') {
-      QueueNotifications.notifyNext(userName, userPosition || 0);
+      QueueNotifications.notifyNext(`${firstName} ${lastName}`, userPosition || 0);
       setLastNotifiedState('next');
     } else if (currentState === 'almost' && lastNotifiedState === 'none') {
-      QueueNotifications.notifyAlmostNext(userName, userPosition || 0, peopleAhead);
+      QueueNotifications.notifyAlmostNext(`${firstName} ${lastName}`, userPosition || 0, peopleAhead);
       setLastNotifiedState('almost');
     }
   
     if (currentState === 'none' && lastNotifiedState !== 'none') {
       setLastNotifiedState('none');
     }
-  }, [peopleAhead, inQueue, notificationsGranted, userName, userPosition, lastNotifiedState]);
+  }, [peopleAhead, inQueue, notificationsGranted, firstName, lastName, userPosition, lastNotifiedState]);
 
   useEffect(() => {
     const q = query(
@@ -381,7 +411,9 @@ export default function BarberQueueClient() {
     try {
       const data = JSON.parse(savedClient);
       setClientId(data.id);
-      setUserName(data.name);
+      setFirstName(data.firstName);
+      setLastName(data.lastName);
+      setPhoneNumber(data.phoneNumber);
       setUserPosition(data.number);
       setInQueue(true);
     } catch (err) {
@@ -419,20 +451,22 @@ export default function BarberQueueClient() {
   }, [clientId]);
   
   useEffect(() => {
-    if (inQueue && clientId && userName && userPosition) {
+    if (inQueue && clientId && firstName && lastName && phoneNumber && userPosition) {
       const clientData = {
         id: clientId,
-        name: userName,
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
         number: userPosition,
         joinedAt: new Date().toISOString()
       };
       localStorage.setItem('queueClient', JSON.stringify(clientData));
     }
-  }, [inQueue, clientId, userName, userPosition]);
+  }, [inQueue, clientId, firstName, lastName, phoneNumber, userPosition]);
   
   // ===== ACTIONS =====
   const handleJoinQueue = async () => {
-    if (loading || inQueue || !userName.trim()) return;
+    if (loading || inQueue || !firstName.trim() || !lastName.trim() || !phoneNumber.trim()) return;
   
     try {
       setLoading(true);
@@ -459,7 +493,9 @@ export default function BarberQueueClient() {
   
         const newClient = {
           id: clientId,
-          name: userName,
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
           number: nextNumber,
           status: "waiting",
           joinedAt: serverTimestamp(),
@@ -482,7 +518,9 @@ export default function BarberQueueClient() {
         "queueClient",
         JSON.stringify({
           id: clientData.id,
-          name: clientData.name,
+          firstName: clientData.firstName,
+          lastName: clientData.lastName,
+          phoneNumber: clientData.phoneNumber,
           number: clientData.number,
           joinedAt: new Date().toISOString(),
         })
@@ -517,7 +555,9 @@ export default function BarberQueueClient() {
       setInQueue(false);
       setClientId('');
       setUserPosition(null);
-      setUserName('');
+      setFirstName('');
+      setLastName('');
+      setPhoneNumber('');
       
     } catch (error) {
       console.error('❌ Failed to leave queue:', error);
@@ -525,146 +565,138 @@ export default function BarberQueueClient() {
       setInQueue(false);
       setClientId('');
       setUserPosition(null);
-      setUserName('');
+      setFirstName('');
+      setLastName('');
+      setPhoneNumber('');
     }
   };
   
   // ===== RENDER =====
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">🌙</div>
-          <Scissors className="w-12 h-12 text-yellow-300 animate-pulse mx-auto mb-4" />
-          <p className="text-emerald-100">Loading queue...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center relative overflow-hidden">
+        <StarsBackground />
+        <ShootingStars />
+        <div className="text-center relative z-10">
+          <Scissors className="w-16 h-16 text-amber-400 animate-pulse mx-auto mb-4" />
+          <p className="text-white/80 text-lg">Loading queue...</p>
         </div>
       </div>
     );
   }
   
   return (
-<div className="relative min-h-screen bg-gradient-to-br from-[#0B1120] via-[#111827] to-[#1E1B4B] pb-8 overflow-hidden">
-      {/* Header with Logo */}
-            {/* 🌌 Stars Background Layer */}
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 pb-8 overflow-hidden">
+      {/* Stars Background */}
       <StarsBackground />
       <ShootingStars />
 
-      {/* Main Content Wrapper */}
-  <div className="relative z-10">
-      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E1B4B] to-[#0F172A] backdrop-blur-md shadow-xl border-b">
+      {/* Main Content */}
+      <div className="relative z-10">
+        {/* Header - No separation, same background */}
         <div className="max-w-md mx-auto px-4 py-6 text-center">
-          {/* 🎯 LOGO PLACEMENT - Replace the placeholder with your actual logo */}
           <div className="flex items-center justify-center gap-4 mb-3">
-            {/* Option 1: Square Logo (Recommended) */}
-            <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-amber-400">
-              {/* Replace this div with: <img src="/path-to-your-logo.png" alt="Barber Elite" className="w-full h-full object-contain p-1" /> */}
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg flex items-center justify-center">
               <img src="/log.png" alt="Barber Elite" className="w-full h-full object-contain rounded-md" />
-              <Scissors className="w-8 h-8 text-emerald-700" />
             </div>
             
             <div className="text-left">
-            <h1 className="text-2xl font-bold text-white tracking-wide">Barber Elite</h1>
-            <p className="text-sm text-yellow-300/80">Ramadan Queue System</p>
+              <h1 className="text-2xl font-bold text-white">Barber Elite</h1>
+              <p className="text-sm text-amber-400">Ramadan Queue System</p>
             </div>
           </div>
           
-          {/* Decorative Ramadan Elements */}
-          <div className="flex items-center justify-center gap-3 text-yellow-300">
-            <span className="text-sm">🌙</span>
-            <div className="h-px bg-amber-400/30 flex-1"></div>
-            <span className="text-xs text-amber-200">رمضان كريم</span>
-            <div className="h-px bg-amber-400/30 flex-1"></div>
-            <span className="text-sm">✨</span>
+          <div className="flex items-center justify-center gap-3 text-amber-400">
+            <span>🌙</span>
+            <div className="h-px bg-white/20 flex-1"></div>
+            <span className="text-sm text-white/60">رمضان كريم</span>
+            <div className="h-px bg-white/20 flex-1"></div>
+            <span>✨</span>
           </div>
         </div>
-      </div>
-      
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Status Banner */}
-        <StatusBanner 
-          queueOpen={queueOpen}
-          inQueue={inQueue}
-          isNext={isNext}
-          isAlmostNext={isAlmostNext}
-        />
         
-        {/* Debug Panel (Remove in production) */}
-        {inQueue && (
-          <DebugPanel
-            clientId={clientId}
-            userPosition={userPosition}
-            currentServing={currentServing}
-            peopleAhead={peopleAhead}
-            estimatedWait={estimatedWait}
-            progress={progress}
-          />
-        )}
-        
-        {/* Main Content - Conditional Rendering */}
-        {!inQueue ? (
-          <JoinQueueForm
-            userName={userName}
-            setUserName={setUserName}
+        <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+          {/* Status Banner */}
+          <StatusBanner 
             queueOpen={queueOpen}
-            onJoin={handleJoinQueue}
-          />
-        ) : (
-          <QueueStatus
-            userName={userName}
-            userPosition={userPosition}
-            peopleAhead={peopleAhead}
-            estimatedWait={estimatedWait}
-            onLeave={handleLeaveQueue}
-          />
-        )}
-        
-        {/* Progress Section - Only when in queue */}
-        {inQueue && (
-          <ProgressSection
-            currentServing={currentServing}
-            totalInQueue={totalInQueue}
-            progress={progress}
-          />
-        )}
-        
-        {/* Call-to-Action Hint */}
-        {inQueue && (
-          <CallToActionHint
+            inQueue={inQueue}
             isNext={isNext}
             isAlmostNext={isAlmostNext}
           />
-        )}
-        
-        {/* Info / Rules */}
-        <InfoRules avgServiceTime={avgServiceTime} />
-        <InstallPWA />
-        
-        {/* Footer */}
-        <div className="text-center pt-4">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-px bg-amber-400/20 flex-1"></div>
-            <span className="text-amber-300 text-xl">🌙</span>
-            <div className="h-px bg-amber-400/20 flex-1"></div>
+          
+          {/* Main Content - Conditional Rendering */}
+          {!inQueue ? (
+            <JoinQueueForm
+              firstName={firstName}
+              setFirstName={setFirstName}
+              lastName={lastName}
+              setLastName={setLastName}
+              phoneNumber={phoneNumber}
+              setPhoneNumber={setPhoneNumber}
+              queueOpen={queueOpen}
+              onJoin={handleJoinQueue}
+            />
+          ) : (
+            <QueueStatus
+              firstName={firstName}
+              lastName={lastName}
+              phoneNumber={phoneNumber}
+              userPosition={userPosition}
+              peopleAhead={peopleAhead}
+              estimatedWait={estimatedWait}
+              onLeave={handleLeaveQueue}
+            />
+          )}
+          
+          {/* Progress Section - Only when in queue */}
+          {inQueue && (
+            <ProgressSection
+              currentServing={currentServing}
+              totalInQueue={totalInQueue}
+              progress={progress}
+            />
+          )}
+          
+          {/* Call-to-Action Hint */}
+          {inQueue && (
+            <CallToActionHint
+              isNext={isNext}
+              isAlmostNext={isAlmostNext}
+            />
+          )}
+          
+          {/* Info / Rules */}
+          <InfoRules avgServiceTime={avgServiceTime} />
+          <InstallPWA />
+          
+          {/* Footer */}
+          <div className="text-center pt-4">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="h-px bg-white/20 flex-1"></div>
+              <span className="text-amber-400">🌙</span>
+              <div className="h-px bg-white/20 flex-1"></div>
+            </div>
+            <p className="text-sm text-white/60">
+              Powered by
+              <a className="text-amber-400 ml-1" href="https://www.instagram.com/talel_galai/" target="_blank" rel="noopener noreferrer">@talel_galai</a>
+            </p>
+            <p className="text-sm text-amber-400 mt-1">
+              رمضان مبارك
+            </p>
           </div>
-          <p className="text-xs text-emerald-200">
-            Powered by Queue Master
-          </p>
-          <p className="text-xs text-amber-300 mt-1">
-            رمضان مبارك
-          </p>
         </div>
+        
+        {/* Notification Prompt */}
+        {inQueue && (
+          <NotificationPrompt
+            userName={`${firstName} ${lastName}`}
+            onPermissionChange={(granted) => {
+              setNotificationsGranted(granted);
+              console.log('Notifications:', granted ? 'enabled' : 'disabled');
+            }}
+          />
+        )}
       </div>
-      {/* Add NotificationPrompt - only show when user joins queue */}
-      {inQueue && (
-        <NotificationPrompt
-          userName={userName}
-          onPermissionChange={(granted) => {
-            setNotificationsGranted(granted);
-            console.log('Notifications:', granted ? 'enabled' : 'disabled');
-          }}
-        />
-      )}
-    </div>
     </div>
   );
 }
