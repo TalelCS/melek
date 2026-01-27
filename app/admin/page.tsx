@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Scissors, Users, Clock, AlertCircle, Check, SkipForward, Play, Pause, RefreshCw, PhoneCall } from 'lucide-react';
+import { Scissors, Users, Clock, AlertCircle, Check, SkipForward, Play, Pause, RefreshCw, PhoneCall, Lightbulb } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, collection, query, where, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -41,7 +41,7 @@ function AdminHeader({ queueOpen, onToggleQueue }) {
 function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQueue, onStartService, onResetQueue, loading }) {
   return (
     <Card className="shadow-md">
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Button
             onClick={onToggleQueue}
@@ -119,9 +119,6 @@ function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
           <div className="text-3xl font-semibold text-slate-700">
             {fullName}
           </div>
-          <div className="text-lg text-slate-500 mt-2">
-            📱 {client.phoneNumber}
-          </div>
         </div>
         
         <div className="grid grid-cols-3 gap-3 mb-3">
@@ -175,7 +172,7 @@ function WaitingList({ clients, onCallClient, loading }) {
   
   return (
     <Card className="shadow-md">
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="w-5 h-5" />
           Waiting List ({clients.length})
@@ -199,8 +196,9 @@ function WaitingList({ clients, onCallClient, loading }) {
                     <div className="text-xl font-semibold text-slate-800">
                       {fullName}
                     </div>
-                    <div className="text-sm text-slate-500">
-                      📱 {client.phoneNumber}
+                    <div className="text-sm text-slate-500 flex">
+                      <PhoneCall className="w-4 h-4 mr-2 mt-1" />
+                      {client.phoneNumber}
                     </div>
                   </div>
                 </div>
@@ -227,7 +225,7 @@ function WaitingList({ clients, onCallClient, loading }) {
 function QuickStats({ waiting, avgServiceTime, estimatedTotal }) {
   return (
     <Card className="bg-slate-50 border-slate-200 shadow-md">
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-4xl font-bold text-slate-800 mb-1">
@@ -651,9 +649,9 @@ export default function BarberQueueAdmin() {
         
         {/* Footer Info */}
         <Alert className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <Lightbulb className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800 text-sm">
-            💡 <strong>Workflow:</strong> Press "Start Service" to begin. Tap "Done" after each client. Use "Call" to dial client's phone number.
+          <strong>Workflow:</strong> Press "Start Service" to begin. Tap "Done" after each client. Use "Call" to dial client's phone number.
           </AlertDescription>
         </Alert>
         

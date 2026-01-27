@@ -263,22 +263,6 @@ function InfoRules({ avgServiceTime }) {
   );
 }
 
-// ===== COMPONENT 6: CALL TO ACTION HINT =====
-function CallToActionHint({ isNext, isAlmostNext }) {
-  if (!isNext && !isAlmostNext) return null;
-  
-  return (
-    <Alert className="bg-amber-500/10 backdrop-blur-md border border-amber-500/20">
-      <AlertCircle className="h-4 w-4 text-amber-400" />
-      <AlertDescription className="text-amber-200">
-        {isNext 
-          ? "🎉 You're next! Please come to the shop now."
-          : "⏰ You can come in ~15 minutes. Please stay nearby."}
-      </AlertDescription>
-    </Alert>
-  );
-}
-
 // ===== MAIN APP COMPONENT =====
 export default function BarberQueueClient() {
   // ===== SOURCE OF TRUTH STATE ONLY =====
@@ -654,14 +638,6 @@ export default function BarberQueueClient() {
               currentServing={currentServing}
               totalInQueue={totalInQueue}
               progress={progress}
-            />
-          )}
-          
-          {/* Call-to-Action Hint */}
-          {inQueue && (
-            <CallToActionHint
-              isNext={isNext}
-              isAlmostNext={isAlmostNext}
             />
           )}
           
