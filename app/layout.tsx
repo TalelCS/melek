@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Barber Elite - Queue System',
   description: 'Ramadan Queue Management System for Barber Elite',
   generator: 'Next.js',
-  manifest: '/manifest.json',
+  manifest: '/manifest-client.json',
   keywords: ['barber', 'queue', 'appointment', 'ramadan', 'haircut'],
   authors: [
     { name: 'Barber Elite' }

@@ -7,6 +7,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Scissors, Clock, Users, AlertCircle } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, increment, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { collection, query, where, onSnapshot as onSnapshotCollection } from 'firebase/firestore';
+import { ShootingStars } from "@/components/ui/shooting-stars";
+import { StarsBackground } from "@/components/ui/stars-background";
 import InstallPWA from '@/components/installPWA';
 import NotificationPrompt from '@/components/NotificationPrompt';
 import { QueueNotifications, canSendNotifications } from '@/lib/notifications';
@@ -17,32 +19,32 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
   const getStatus = () => {
     if (!queueOpen) {
       return {
-        icon: '🔴',
+        icon: '🌙',
         text: 'Queue is closed',
-        className: 'bg-red-50 border-red-200 text-red-800'
+        className: 'bg-gradient-to-r from-rose-50 to-orange-50 border-rose-300 text-rose-900'
       };
     }
     
     if (isNext) {
       return {
-        icon: '🔵',
+        icon: '✨',
         text: "You're being served - Please come to the shop!",
-        className: 'bg-blue-50 border-blue-200 text-blue-800'
+        className: 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-400 text-emerald-900'
       };
     }
     
     if (isAlmostNext) {
       return {
-        icon: '🟡',
+        icon: '⭐',
         text: 'Almost your turn - Please come to the shop',
-        className: 'bg-yellow-50 border-yellow-200 text-yellow-800'
+        className: 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-400 text-amber-900'
       };
     }
     
     return {
-      icon: '🟢',
+      icon: '🌟',
       text: 'Queue is open - Join now',
-      className: 'bg-green-50 border-green-200 text-green-800'
+      className: 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-300 text-emerald-900'
     };
   };
   
@@ -59,25 +61,34 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
 
 // ===== COMPONENT 2: JOIN QUEUE FORM =====
 function JoinQueueForm({ userName, setUserName, queueOpen, onJoin }) {
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (userName.trim() && queueOpen) {
       onJoin();
     }
   };
   
   return (
-    <Card className="shadow-lg border-2">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-center text-xl">
-          Join Today's Queue
+    <Card className="shadow-xl border-2 border-amber-200/50 bg-gradient-to-br from-white to-amber-50/30 overflow-hidden relative">
+      {/* Decorative Islamic Pattern Corner */}
+      <div className="absolute top-0 right-0 w-24 h-24 opacity-5">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
+          <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
+          <circle cx="50" cy="50" r="10" fill="none" stroke="currentColor" strokeWidth="1" className="text-amber-600"/>
+        </svg>
+      </div>
+      
+      <CardHeader className="pb-4 relative">
+        <CardTitle className="text-center text-xl text-emerald-900">
+          🌙 Join Today's Queue
         </CardTitle>
       </CardHeader>
       
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="relative">
+        <div className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-emerald-800 mb-2">
               Your Name
             </label>
             <Input
@@ -86,19 +97,20 @@ function JoinQueueForm({ userName, setUserName, queueOpen, onJoin }) {
               placeholder="Enter your name"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              className="text-lg h-12"
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              className="text-lg h-12 border-emerald-200 focus:border-amber-400 focus:ring-amber-400"
               disabled={!queueOpen}
             />
           </div>
           
           <Button
-            type="submit"
+            onClick={handleSubmit}
             disabled={!userName.trim() || !queueOpen}
-            className="w-full h-14 text-lg font-semibold bg-slate-800 hover:bg-slate-700"
+            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-yellow-400 to-yellow-500 text-black hover:from-yellow-300 hover:to-yellow-400 hover:from-emerald-800 hover:to-emerald-700 shadow-lg"
           >
-            Join Queue
+            Join Queue ✨
           </Button>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
@@ -107,37 +119,42 @@ function JoinQueueForm({ userName, setUserName, queueOpen, onJoin }) {
 // ===== COMPONENT 3: QUEUE STATUS =====
 function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLeave }) {
   return (
-    <Card className="shadow-lg border-2">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-center text-xl">
+    <Card className="shadow-xl border-2 border-amber-200/50 bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden relative">
+      {/* Decorative stars */}
+      <div className="absolute top-2 left-2 text-yellow-300 opacity-20 text-2xl">✨</div>
+      <div className="absolute top-4 right-4 text-yellow-300 opacity-20 text-xl">⭐</div>
+      <div className="absolute bottom-4 left-6 text-yellow-300 opacity-20 text-lg">🌟</div>
+      
+      <CardHeader className="pb-4 relative">
+        <CardTitle className="text-center text-xl text-emerald-900">
           You're in the queue ✅
         </CardTitle>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="relative">
         <div className="space-y-6">
           {/* Queue Position - Big Number */}
           <div className="text-center">
-            <p className="text-sm text-slate-600 mb-1">Your number</p>
-            <div className="text-6xl font-bold text-slate-800 my-3">
+            <p className="text-sm text-emerald-700 mb-1">Your number</p>
+            <div className="text-6xl font-bold bg-gradient-to-br from-yellow-400 to-yellow-500 bg-clip-text text-transparent my-3">
               #{userPosition}
             </div>
-            <p className="text-xs text-slate-500">Joined as {userName}</p>
+            <p className="text-xs text-emerald-600">Joined as {userName}</p>
           </div>
           
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <Users className="w-6 h-6 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-600 mb-1">People before you</p>
-              <p className="text-3xl font-bold text-slate-800">{peopleAhead}</p>
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 text-white/80 rounded-lg p-4 text-center border border-emerald-100">
+              <Users className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+              <p className="text-sm text-emerald-700 mb-1">People before you</p>
+              <p className="text-3xl font-bold text-emerald-900">{peopleAhead}</p>
             </div>
             
-            <div className="bg-slate-50 rounded-lg p-4 text-center">
-              <Clock className="w-6 h-6 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-600 mb-1">Estimated wait</p>
-              <p className="text-3xl font-bold text-slate-800">~{estimatedWait}</p>
-              <p className="text-xs text-slate-500">minutes</p>
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 text-center border border-amber-100">
+              <Clock className="w-6 h-6 text-amber-600 mx-auto mb-2" />
+              <p className="text-sm text-amber-700 mb-1">Estimated wait</p>
+              <p className="text-3xl font-bold text-amber-900">~{estimatedWait}</p>
+              <p className="text-xs text-amber-600">minutes</p>
             </div>
           </div>
           
@@ -145,7 +162,7 @@ function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLea
           <Button
             onClick={onLeave}
             variant="outline"
-            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+            className="w-full text-rose-600 border-rose-200 hover:bg-rose-50"
           >
             Leave Queue
           </Button>
@@ -158,23 +175,23 @@ function QueueStatus({ userName, userPosition, peopleAhead, estimatedWait, onLea
 // ===== COMPONENT 4: PROGRESS SECTION =====
 function ProgressSection({ currentServing, totalInQueue, progress }) {
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-md border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/20">
       <CardContent className="pt-6">
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-600">Currently serving:</span>
-            <span className="font-bold text-slate-800 text-lg">#{currentServing}</span>
+            <span className="text-emerald-700">Currently serving:</span>
+            <span className="font-bold text-emerald-900 text-lg">#{currentServing}</span>
           </div>
           
           {/* Progress Bar */}
-          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-emerald-100 rounded-full h-3 overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-slate-600 to-slate-800 h-full rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
           
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-emerald-600 text-center">
             {currentServing} of {totalInQueue} served today
           </p>
         </div>
@@ -186,19 +203,19 @@ function ProgressSection({ currentServing, totalInQueue, progress }) {
 // ===== COMPONENT 5: INFO / RULES =====
 function InfoRules({ avgServiceTime }) {
   return (
-    <Card className="bg-slate-50 border-slate-200">
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10 text-white/80 border-emerald-200">
       <CardContent className="pt-6">
-        <div className="space-y-2 text-xs text-slate-600">
+        <div className="space-y-2 text-xs text-emerald-800">
           <div className="flex items-start gap-2">
-            <span className="text-slate-400">•</span>
+            <span className="text-amber-500">🌙</span>
             <span>Queue resets daily at midnight</span>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-slate-400">•</span>
+            <span className="text-amber-500">⭐</span>
             <span>Missing your turn may skip your position</span>
           </div>
           <div className="flex items-start gap-2">
-            <span className="text-slate-400">•</span>
+            <span className="text-amber-500">✨</span>
             <span>Average service time: {avgServiceTime} minutes</span>
           </div>
         </div>
@@ -226,7 +243,7 @@ function CallToActionHint({ isNext, isAlmostNext }) {
 // ===== COMPONENT 7: DEBUG PANEL =====
 function DebugPanel({ clientId, userPosition, currentServing, peopleAhead, estimatedWait, progress }) {
   return (
-    <div className="bg-slate-800 text-white p-3 rounded text-xs font-mono space-y-1">
+    <div className="bg-emerald-900 text-white p-3 rounded text-xs font-mono space-y-1 border border-amber-400/30">
       <div>Client ID: {clientId.slice(0, 8)}...</div>
       <div>Position: {userPosition} | Serving: {currentServing} | Ahead: {peopleAhead}</div>
       <div>Wait: ~{estimatedWait}min | Progress: {progress.toFixed(1)}%</div>
@@ -301,11 +318,11 @@ export default function BarberQueueClient() {
         setTotalInQueue(data.lastNumber ?? 0);
         setAvgServiceTime(data.avgServiceTime ?? 15);
   
-        setLoading(false); // ✅ THIS UNBLOCKS THE UI
+        setLoading(false);
       },
       (error) => {
         console.error("❌ Queue listener error:", error);
-        setLoading(false); // prevent infinite loading on error
+        setLoading(false);
       }
     );
   
@@ -317,7 +334,6 @@ export default function BarberQueueClient() {
       return;
     }
   
-    // Determine current state
     let currentState: 'none' | 'almost' | 'next' = 'none';
     
     if (peopleAhead === 0) {
@@ -326,12 +342,10 @@ export default function BarberQueueClient() {
       currentState = 'almost';
     }
   
-    // Only notify on state changes
     if (currentState === lastNotifiedState) {
       return;
     }
   
-    // Send appropriate notification
     if (currentState === 'next' && lastNotifiedState !== 'next') {
       QueueNotifications.notifyNext(userName, userPosition || 0);
       setLastNotifiedState('next');
@@ -340,7 +354,6 @@ export default function BarberQueueClient() {
       setLastNotifiedState('almost');
     }
   
-    // Reset state when moving away from critical positions
     if (currentState === 'none' && lastNotifiedState !== 'none') {
       setLastNotifiedState('none');
     }
@@ -361,7 +374,6 @@ export default function BarberQueueClient() {
   }, [inQueue, userPosition]);
   
   // ===== CLIENT IDENTITY & PERSISTENCE =====
-  // Load saved client data on mount
   useEffect(() => {
     const savedClient = localStorage.getItem("queueClient");
     if (!savedClient) return;
@@ -406,7 +418,6 @@ export default function BarberQueueClient() {
     return () => unsubscribe();
   }, [clientId]);
   
-  // Save client data to localStorage whenever it changes
   useEffect(() => {
     if (inQueue && clientId && userName && userPosition) {
       const clientData = {
@@ -428,7 +439,6 @@ export default function BarberQueueClient() {
   
       const queueRef = doc(db, "queues", "today");
   
-      // Run transaction to safely get next number
       const clientData = await runTransaction(db, async (transaction) => {
         const queueSnap = await transaction.get(queueRef);
   
@@ -455,7 +465,6 @@ export default function BarberQueueClient() {
           joinedAt: serverTimestamp(),
         };
   
-        // 🔐 Atomic writes
         transaction.set(clientRef, newClient);
         transaction.update(queueRef, {
           lastNumber: nextNumber,
@@ -465,7 +474,6 @@ export default function BarberQueueClient() {
         return newClient;
       });
   
-      // ✅ Save to state & localStorage
       setClientId(clientData.id);
       setUserPosition(clientData.number);
       setInQueue(true);
@@ -492,7 +500,6 @@ export default function BarberQueueClient() {
     if (!confirm('Are you sure you want to leave the queue?')) return;
 
     try {
-      // Update client status in Firestore
       if (clientId) {
         const clientRef = doc(db, 'queues', 'today', 'clients', clientId);
         await setDoc(
@@ -505,10 +512,8 @@ export default function BarberQueueClient() {
         );
       }
 
-      // Clear localStorage
       localStorage.removeItem('queueClient');
       
-      // Reset state
       setInQueue(false);
       setClientId('');
       setUserPosition(null);
@@ -516,7 +521,6 @@ export default function BarberQueueClient() {
       
     } catch (error) {
       console.error('❌ Failed to leave queue:', error);
-      // Still clear local state even if Firebase update fails
       localStorage.removeItem('queueClient');
       setInQueue(false);
       setClientId('');
@@ -526,28 +530,52 @@ export default function BarberQueueClient() {
   };
   
   // ===== RENDER =====
-  // Show loading state while fetching queue data
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-800 to-emerald-900 flex items-center justify-center">
         <div className="text-center">
-          <Scissors className="w-12 h-12 text-slate-400 animate-pulse mx-auto mb-4" />
-          <p className="text-slate-600">Loading queue...</p>
+          <div className="text-6xl mb-4 animate-pulse">🌙</div>
+          <Scissors className="w-12 h-12 text-yellow-300 animate-pulse mx-auto mb-4" />
+          <p className="text-emerald-100">Loading queue...</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pb-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-slate-200">
+<div className="relative min-h-screen bg-gradient-to-br from-[#0B1120] via-[#111827] to-[#1E1B4B] pb-8 overflow-hidden">
+      {/* Header with Logo */}
+            {/* 🌌 Stars Background Layer */}
+      <StarsBackground />
+      <ShootingStars />
+
+      {/* Main Content Wrapper */}
+  <div className="relative z-10">
+      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E1B4B] to-[#0F172A] backdrop-blur-md shadow-xl border-b">
         <div className="max-w-md mx-auto px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Scissors className="w-8 h-8 text-slate-700" />
-            <h1 className="text-2xl font-bold text-slate-800">Barber Elite</h1>
+          {/* 🎯 LOGO PLACEMENT - Replace the placeholder with your actual logo */}
+          <div className="flex items-center justify-center gap-4 mb-3">
+            {/* Option 1: Square Logo (Recommended) */}
+            <div className="w-16 h-16 bg-white rounded-lg shadow-lg flex items-center justify-center border-2 border-amber-400">
+              {/* Replace this div with: <img src="/path-to-your-logo.png" alt="Barber Elite" className="w-full h-full object-contain p-1" /> */}
+              <img src="/log.png" alt="Barber Elite" className="w-full h-full object-contain rounded-md" />
+              <Scissors className="w-8 h-8 text-emerald-700" />
+            </div>
+            
+            <div className="text-left">
+            <h1 className="text-2xl font-bold text-white tracking-wide">Barber Elite</h1>
+            <p className="text-sm text-yellow-300/80">Ramadan Queue System</p>
+            </div>
           </div>
-          <p className="text-sm text-slate-600">Ramadan Queue System</p>
+          
+          {/* Decorative Ramadan Elements */}
+          <div className="flex items-center justify-center gap-3 text-yellow-300">
+            <span className="text-sm">🌙</span>
+            <div className="h-px bg-amber-400/30 flex-1"></div>
+            <span className="text-xs text-amber-200">رمضان كريم</span>
+            <div className="h-px bg-amber-400/30 flex-1"></div>
+            <span className="text-sm">✨</span>
+          </div>
         </div>
       </div>
       
@@ -613,8 +641,16 @@ export default function BarberQueueClient() {
         
         {/* Footer */}
         <div className="text-center pt-4">
-          <p className="text-xs text-slate-400">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="h-px bg-amber-400/20 flex-1"></div>
+            <span className="text-amber-300 text-xl">🌙</span>
+            <div className="h-px bg-amber-400/20 flex-1"></div>
+          </div>
+          <p className="text-xs text-emerald-200">
             Powered by Queue Master
+          </p>
+          <p className="text-xs text-amber-300 mt-1">
+            رمضان مبارك
           </p>
         </div>
       </div>
@@ -628,6 +664,7 @@ export default function BarberQueueClient() {
           }}
         />
       )}
+    </div>
     </div>
   );
 }

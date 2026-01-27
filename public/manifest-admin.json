@@ -1,12 +1,12 @@
 {
-    "name": "Barber Elite - Queue System",
-    "short_name": "Barber Elite",
-    "description": "Ramadan Queue Management System for Barber Elite",
-    "start_url": "/",
-    "scope": "/",
+    "name": "Barber Elite - Admin",
+    "short_name": "Admin",
+    "description": "Admin dashboard for Barber Elite queue management",
+    "start_url": "/admin",
+    "scope": "/admin",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#1e293b",
+    "background_color": "#f1f5f9",
+    "theme_color": "#334155",
     "orientation": "portrait-primary",
     "categories": ["business", "productivity"],
     "lang": "en-US",
@@ -75,36 +75,10 @@
     ],
     "screenshots": [
       {
-        "src": "/screenshot-mobile.png",
+        "src": "/screenshot-admin.png",
         "sizes": "540x720",
         "type": "image/png",
         "form_factor": "narrow"
-      }
-    ],
-    "shortcuts": [
-      {
-        "name": "Join Queue",
-        "short_name": "Join",
-        "description": "Join the barber queue",
-        "url": "/?action=join",
-        "icons": [
-          {
-            "src": "/icon-96x96.png",
-            "sizes": "96x96"
-          }
-        ]
-      },
-      {
-        "name": "Admin Panel",
-        "short_name": "Admin",
-        "description": "Open admin dashboard",
-        "url": "/admin",
-        "icons": [
-          {
-            "src": "/icon-96x96.png",
-            "sizes": "96x96"
-          }
-        ]
       }
     ],
     "prefer_related_applications": false
