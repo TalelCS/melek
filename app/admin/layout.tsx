@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import PinProtection from './Pinprotection';
+import PinProtection from '@/components/PinProtection';
 
 export const metadata: Metadata = {
   title: 'Barber Elite - Admin Dashboard',
