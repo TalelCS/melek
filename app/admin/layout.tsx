@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     { name: 'Barber Elite' }
   ],
   icons: [
-    { rel: 'apple-touch-icon', url: '/apple-touch-icon.png' },
-    { rel: 'icon', url: '/favicon.ico' },
+    { rel: 'apple-touch-icon', url: '/admin-icons/apple-touch-icon.png' },
+    { rel: 'icon', url: '/admin-icons/icon-192x192.png' },
   ],
   appleWebApp: {
     capable: true,
