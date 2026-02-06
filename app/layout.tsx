@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Barber Elite - Queue System',
-  description: 'Ramadan Queue Management System for Barber Elite',
+  title: 'Melek Coiff',
+  description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
   generator: 'Next.js',
   manifest: '/manifest-client.json',
-  keywords: ['barber', 'queue', 'appointment', 'ramadan', 'haircut'],
+  keywords: ['coiffeur', 'barbier', 'file d\'attente', 'rendez-vous', 'ramadan', 'coupe de cheveux', 'melek coiff'],
   authors: [
-    { name: 'Barber Elite' }
+    { name: 'Melek Coiff' }
   ],
   icons: [
     { rel: 'apple-touch-icon', url: '/client-icons/apple-touch-icon.png' },
@@ -17,27 +17,27 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Barber Elite',
+    title: 'Melek Coiff',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: 'website',
-    siteName: 'Barber Elite',
+    siteName: 'Melek Coiff',
     title: {
-      default: 'Barber Elite - Queue System',
-      template: '%s | Barber Elite'
+      default: 'Melek Coiffa',
+      template: '%s | Melek Coiff'
     },
-    description: 'Ramadan Queue Management System for Barber Elite',
+    description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
   },
   twitter: {
     card: 'summary',
     title: {
-      default: 'Barber Elite - Queue System',
-      template: '%s | Barber Elite'
+      default: 'Melek Coiff',
+      template: '%s | Melek Coiff'
     },
-    description: 'Ramadan Queue Management System for Barber Elite',
+    description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
   },
 };
 
@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         {/* PWA Primary Color */}
         <meta name="theme-color" content="#1e293b" />

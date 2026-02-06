@@ -10,14 +10,14 @@ import { db } from '@/lib/firebase';
 // ===== COMPONENT 1: HEADER WITH STATUS =====
 function AdminHeader({ queueOpen, onToggleQueue }) {
   return (
-    <div className="bg-white shadow-md border-b-4 border-slate-800">
+    <div className="bg-slate-900 shadow-xl border-b-4 border-amber-500">
       <div className="max-w-2xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Scissors className="w-8 h-8 text-slate-700" />
+            <Scissors className="w-8 h-8 text-amber-400" />
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Barber Elite</h1>
-              <p className="text-xs text-slate-500">Admin Dashboard</p>
+              <h1 className="text-xl font-bold text-white">Melek Coiff</h1>
+              <p className="text-xs text-slate-400">Admin Dashboard</p>
             </div>
           </div>
           
@@ -25,8 +25,8 @@ function AdminHeader({ queueOpen, onToggleQueue }) {
             onClick={onToggleQueue}
             className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
               queueOpen
-                ? 'bg-green-500 text-white shadow-lg'
-                : 'bg-red-500 text-white shadow-lg'
+                ? 'bg-emerald-500 text-white shadow-lg hover:bg-emerald-600'
+                : 'bg-red-500 text-white shadow-lg hover:bg-red-600'
             }`}
           >
             {queueOpen ? '🟢 OPEN' : '🔴 CLOSED'}
@@ -38,17 +38,17 @@ function AdminHeader({ queueOpen, onToggleQueue }) {
 }
 
 // ===== COMPONENT 2: QUEUE CONTROLS =====
-function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQueue, onStartService, onResetQueue, loading }) {
+function QueueControls({ queueOpen, currentPosition, hasWaitingClients, onToggleQueue, onStartService, onResetQueue, loading }) {
   return (
-    <Card className="shadow-md">
-      <CardContent>
+    <Card className="shadow-md bg-slate-800 border-slate-700">
+      <CardContent className="pt-6">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Button
             onClick={onToggleQueue}
             className={`h-14 text-base font-semibold ${
               queueOpen
                 ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-green-600 hover:bg-green-700'
+                : 'bg-emerald-600 hover:bg-emerald-700'
             }`}
           >
             {queueOpen ? (
@@ -66,7 +66,7 @@ function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQu
           
           <Button
             onClick={onStartService}
-            disabled={loading || currentNumber > 0 || !hasWaitingClients}
+            disabled={loading || currentPosition > 0 || !hasWaitingClients}
             className="h-14 text-base font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
             <Play className="w-5 h-5 mr-2" />
@@ -77,7 +77,7 @@ function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQu
         <Button
           onClick={onResetQueue}
           variant="outline"
-          className="w-full h-12 text-base font-semibold border-2 border-red-300 text-red-600 hover:bg-red-50"
+          className="w-full h-12 text-base font-semibold border-2 border-red-400/50 text-red-400 hover:bg-red-500/10"
         >
           <RefreshCw className="w-5 h-5 mr-2" />
           Reset Day
@@ -91,33 +91,43 @@ function QueueControls({ queueOpen, currentNumber, hasWaitingClients, onToggleQu
 function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
   if (!client) {
     return (
-      <Card className="shadow-lg border-2 border-slate-300">
+      <Card className="shadow-lg border-2 border-slate-700 bg-slate-800">
         <CardContent className="py-12 text-center">
-          <AlertCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-slate-600 mx-auto mb-4" />
           <p className="text-slate-400 text-lg">No one being served</p>
-          <p className="text-slate-300 text-sm mt-2">Press "Start Service" to begin</p>
+          <p className="text-slate-500 text-sm mt-2">Press "Start Service" to begin</p>
         </CardContent>
       </Card>
     );
   }
   
   const fullName = `${client.firstName} ${client.lastName}`;
+  const skipCount = client.skipCount || 0;
   
   return (
-    <Card className="shadow-lg border-4 border-blue-500 bg-blue-50">
+    <Card className="shadow-lg border-4 border-blue-500 bg-gradient-to-br from-slate-800 to-slate-900">
       <CardHeader className="pb-3">
-        <CardTitle className="text-center text-sm text-blue-600 font-semibold">
+        <CardTitle className="text-center text-sm text-blue-400 font-semibold flex items-center justify-center gap-2">
           NOW SERVING
+          {skipCount > 0 && (
+            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">
+              Skipped {skipCount}x
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       
       <CardContent>
         <div className="text-center mb-4">
-          <div className="text-7xl font-bold text-slate-800 mb-2">
+          <div className="text-7xl font-bold text-white mb-2">
             #{client.number}
           </div>
-          <div className="text-3xl font-semibold text-slate-700">
+          <div className="text-3xl font-semibold text-slate-200">
             {fullName}
+          </div>
+          <div className="text-lg text-amber-400 mt-2 flex items-center justify-center gap-2">
+            <PhoneCall className="w-5 h-5" />
+            {client.phoneNumber}
           </div>
         </div>
         
@@ -125,7 +135,7 @@ function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
           <Button
             onClick={onDone}
             disabled={loading}
-            className="h-16 text-lg font-bold bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            className="h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
           >
             <Check className="w-6 h-6 mr-2" />
             {loading ? 'Processing...' : 'Done'}
@@ -135,10 +145,14 @@ function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
             onClick={onSkip}
             disabled={loading}
             variant="outline"
-            className="h-16 text-lg font-bold border-2 border-amber-400 text-amber-600 hover:bg-amber-50 disabled:opacity-50"
+            className={`h-16 text-lg font-bold border-2 disabled:opacity-50 ${
+              skipCount >= 2 
+                ? 'border-red-500 text-red-400 hover:bg-red-500/10' 
+                : 'border-amber-500 text-amber-400 hover:bg-amber-500/10'
+            }`}
           >
             <SkipForward className="w-6 h-6 mr-2" />
-            {loading ? 'Processing...' : 'Skip'}
+            {loading ? '...' : skipCount >= 2 ? 'Remove' : 'Skip'}
           </Button>
           
           <Button
@@ -159,9 +173,9 @@ function CurrentClient({ client, onDone, onSkip, onCall, loading }) {
 function WaitingList({ clients, onCallClient, loading }) {
   if (clients.length === 0) {
     return (
-      <Card>
+      <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-lg">Waiting List</CardTitle>
+          <CardTitle className="text-lg text-white">Waiting List</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-slate-400 text-center py-8">No one waiting</p>
@@ -171,9 +185,9 @@ function WaitingList({ clients, onCallClient, loading }) {
   }
   
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
+    <Card className="shadow-md bg-slate-800 border-slate-700">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2 text-white">
           <Users className="w-5 h-5" />
           Waiting List ({clients.length})
         </CardTitle>
@@ -183,21 +197,27 @@ function WaitingList({ clients, onCallClient, loading }) {
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {clients.map((client) => {
             const fullName = `${client.firstName} ${client.lastName}`;
+            const skipCount = client.skipCount || 0;
             return (
               <div
                 key={client.id}
-                className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                className="flex items-center justify-between p-4 bg-slate-900 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="text-3xl font-bold text-slate-700 w-16">
+                  <div className="text-3xl font-bold text-amber-400 w-16">
                     #{client.number}
                   </div>
                   <div>
-                    <div className="text-xl font-semibold text-slate-800">
+                    <div className="text-xl font-semibold text-white flex items-center gap-2">
                       {fullName}
+                      {skipCount > 0 && (
+                        <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">
+                          {skipCount}x skipped
+                        </span>
+                      )}
                     </div>
-                    <div className="text-sm text-slate-500 flex">
-                      <PhoneCall className="w-4 h-4 mr-2 mt-1" />
+                    <div className="text-sm text-slate-400 flex items-center gap-2">
+                      <PhoneCall className="w-4 h-4" />
                       {client.phoneNumber}
                     </div>
                   </div>
@@ -207,7 +227,7 @@ function WaitingList({ clients, onCallClient, loading }) {
                   onClick={() => onCallClient(client)}
                   disabled={loading}
                   variant="outline"
-                  className="h-12 px-6 border-2 border-blue-400 text-blue-600 hover:bg-blue-50 font-semibold disabled:opacity-50"
+                  className="h-12 px-6 border-2 border-blue-500 text-blue-400 hover:bg-blue-500/10 font-semibold disabled:opacity-50"
                 >
                   <PhoneCall className="w-4 h-4 mr-2" />
                   Call
@@ -224,34 +244,34 @@ function WaitingList({ clients, onCallClient, loading }) {
 // ===== COMPONENT 5: QUICK STATS =====
 function QuickStats({ waiting, avgServiceTime, estimatedTotal }) {
   return (
-    <Card className="bg-slate-50 border-slate-200 shadow-md">
-      <CardContent>
+    <Card className="bg-slate-800 border-slate-700 shadow-md">
+      <CardContent className="pt-6">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-4xl font-bold text-slate-800 mb-1">
+            <div className="text-4xl font-bold text-white mb-1">
               {waiting}
             </div>
-            <div className="text-xs text-slate-600 flex items-center justify-center gap-1">
+            <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
               <Users className="w-3 h-3" />
               Waiting
             </div>
           </div>
           
           <div>
-            <div className="text-4xl font-bold text-slate-800 mb-1">
+            <div className="text-4xl font-bold text-white mb-1">
               {avgServiceTime}
             </div>
-            <div className="text-xs text-slate-600 flex items-center justify-center gap-1">
+            <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
               <Clock className="w-3 h-3" />
               Avg (min)
             </div>
           </div>
           
           <div>
-            <div className="text-4xl font-bold text-slate-800 mb-1">
+            <div className="text-4xl font-bold text-white mb-1">
               ~{estimatedTotal}
             </div>
-            <div className="text-xs text-slate-600 flex items-center justify-center gap-1">
+            <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
               <Clock className="w-3 h-3" />
               Total (min)
             </div>
@@ -266,8 +286,8 @@ function QuickStats({ waiting, avgServiceTime, estimatedTotal }) {
 export default function BarberQueueAdmin() {
   // ===== STATE =====
   const [queueOpen, setQueueOpen] = useState(true);
-  const [currentNumber, setCurrentNumber] = useState(0);
-  const [lastNumber, setLastNumber] = useState(0);
+  const [currentPosition, setCurrentPosition] = useState(0); // Current position being served
+  const [lastNumber, setLastNumber] = useState(0); // Last ticket number issued
   const [avgServiceTime, setAvgServiceTime] = useState(15);
   const [currentClient, setCurrentClient] = useState(null);
   const [waitingClients, setWaitingClients] = useState([]);
@@ -289,7 +309,7 @@ export default function BarberQueueAdmin() {
         try {
           await setDoc(queueRef, {
             queueOpen: true,
-            currentNumber: 0,
+            currentPosition: 0,
             lastNumber: 0,
             avgServiceTime: 15,
             updatedAt: serverTimestamp(),
@@ -319,7 +339,7 @@ export default function BarberQueueAdmin() {
         const data = snap.data();
   
         setQueueOpen(data.queueOpen ?? true);
-        setCurrentNumber(data.currentNumber ?? 0);
+        setCurrentPosition(data.currentPosition ?? 0);
         setLastNumber(data.lastNumber ?? 0);
         setAvgServiceTime(data.avgServiceTime ?? 15);
   
@@ -336,14 +356,14 @@ export default function BarberQueueAdmin() {
   
   // ===== LISTEN TO CURRENT CLIENT =====
   useEffect(() => {
-    if (currentNumber === 0) {
+    if (currentPosition === 0) {
       setCurrentClient(null);
       return;
     }
     
     const q = query(
       collection(db, "queues", "today", "clients"),
-      where("number", "==", currentNumber),
+      where("position", "==", currentPosition),
       where("status", "==", "waiting")
     );
     
@@ -360,14 +380,14 @@ export default function BarberQueueAdmin() {
     });
     
     return () => unsubscribe();
-  }, [currentNumber]);
+  }, [currentPosition]);
   
   // ===== LISTEN TO ALL WAITING CLIENTS (for stats) =====
   useEffect(() => {
     const q = query(
       collection(db, "queues", "today", "clients"),
       where("status", "==", "waiting"),
-      orderBy("number", "asc")
+      orderBy("position", "asc")
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -386,8 +406,8 @@ export default function BarberQueueAdmin() {
     const q = query(
       collection(db, "queues", "today", "clients"),
       where("status", "==", "waiting"),
-      where("number", ">", currentNumber),
-      orderBy("number", "asc")
+      where("position", ">", currentPosition),
+      orderBy("position", "asc")
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -399,7 +419,7 @@ export default function BarberQueueAdmin() {
     });
     
     return () => unsubscribe();
-  }, [currentNumber]);
+  }, [currentPosition]);
   
   // ===== ACTIONS =====
   const handleToggleQueue = async () => {
@@ -420,20 +440,19 @@ export default function BarberQueueAdmin() {
   };
   
   const handleStartService = async () => {
-    if (actionLoading || currentNumber > 0 || allWaitingClients.length === 0) return;
+    if (actionLoading || currentPosition > 0 || allWaitingClients.length === 0) return;
     
     try {
       setActionLoading(true);
       
       const queueRef = doc(db, "queues", "today");
       
-      // Start with client #1
       await updateDoc(queueRef, {
-        currentNumber: 1,
+        currentPosition: 1,
         updatedAt: serverTimestamp()
       });
       
-      console.log('✅ Service started with client #1');
+      console.log('✅ Service started with position #1');
       
     } catch (error) {
       console.error('❌ Failed to start service:', error);
@@ -453,24 +472,25 @@ export default function BarberQueueAdmin() {
       const queueRef = doc(db, "queues", "today");
       const clientsRef = collection(db, "queues", "today", "clients");
       
-      // Get all clients
       const clientsSnapshot = await getDocs(clientsRef);
       
-      // Create batch to delete all clients
       const batch = writeBatch(db);
       
       clientsSnapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
       
-      // Reset queue counters
       batch.update(queueRef, {
-        currentNumber: 0,
+        currentPosition: 0,
         lastNumber: 0,
         updatedAt: serverTimestamp()
       });
       
       await batch.commit();
+      
+      setCurrentClient(null);
+      setWaitingClients([]);
+      setAllWaitingClients([]);
       
       console.log('✅ Queue reset successfully');
       alert('✅ Queue reset successfully!');
@@ -493,15 +513,13 @@ export default function BarberQueueAdmin() {
       const clientRef = doc(db, "queues", "today", "clients", currentClient.id);
       
       await runTransaction(db, async (transaction) => {
-        // Mark client as done
         transaction.update(clientRef, {
           status: "done",
           completedAt: serverTimestamp()
         });
         
-        // Move to next client in queue
         transaction.update(queueRef, {
-          currentNumber: currentNumber + 1,
+          currentPosition: currentPosition + 1,
           updatedAt: serverTimestamp()
         });
       });
@@ -520,8 +538,44 @@ export default function BarberQueueAdmin() {
     if (!currentClient || actionLoading) return;
     
     const fullName = `${currentClient.firstName} ${currentClient.lastName}`;
+    const skipCount = currentClient.skipCount || 0;
     
-    if (!confirm(`⚠️ Skip ${fullName}? They will be moved behind the next person in line.`)) return;
+    // 3rd skip = remove from queue
+    if (skipCount >= 2) {
+      if (!confirm(`⚠️ Remove ${fullName} from queue? (3rd skip - marked as no-show)`)) return;
+      
+      try {
+        setActionLoading(true);
+        
+        const queueRef = doc(db, "queues", "today");
+        const clientRef = doc(db, "queues", "today", "clients", currentClient.id);
+        
+        await runTransaction(db, async (transaction) => {
+          transaction.update(clientRef, {
+            status: "no_show",
+            removedAt: serverTimestamp()
+          });
+          
+          transaction.update(queueRef, {
+            currentPosition: currentPosition + 1,
+            updatedAt: serverTimestamp()
+          });
+        });
+        
+        console.log(`❌ ${fullName} marked as no-show (3rd skip)`);
+        alert(`❌ ${fullName} removed from queue (no-show)`);
+        
+      } catch (error) {
+        console.error('❌ Failed to remove client:', error);
+        alert('Failed to remove client. Please try again.');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+    
+    // 1st or 2nd skip = move back by 1 position
+    if (!confirm(`⚠️ Skip ${fullName}? They will move back by 1 position. (Skip ${skipCount + 1}/3)`)) return;
     
     try {
       setActionLoading(true);
@@ -529,12 +583,13 @@ export default function BarberQueueAdmin() {
       const queueRef = doc(db, "queues", "today");
       const clientRef = doc(db, "queues", "today", "clients", currentClient.id);
       
-      // Get the next waiting client
+      // Get the next waiting client by position
       const nextClientQuery = query(
         collection(db, "queues", "today", "clients"),
         where("status", "==", "waiting"),
-        where("number", ">", currentNumber),
-        orderBy("number", "asc")
+        where("position", ">", currentPosition),
+        orderBy("position", "asc"),
+        limit(1)
       );
       
       const nextClientSnapshot = await getDocs(nextClientQuery);
@@ -547,29 +602,30 @@ export default function BarberQueueAdmin() {
       
       const nextClient = nextClientSnapshot.docs[0];
       const nextClientRef = doc(db, "queues", "today", "clients", nextClient.id);
-      const nextClientNumber = nextClient.data().number;
-      const nextClientFullName = `${nextClient.data().firstName} ${nextClient.data().lastName}`;
+      const nextClientData = nextClient.data();
+      const nextClientPosition = nextClientData.position;
+      const nextClientFullName = `${nextClientData.firstName} ${nextClientData.lastName}`;
       
       await runTransaction(db, async (transaction) => {
-        // Current client takes next client's number
+        // Current client moves back by 1 position (position changes, number stays)
         transaction.update(clientRef, {
-          number: nextClientNumber,
-          skippedAt: serverTimestamp()
+          position: nextClientPosition,
+          skipCount: skipCount + 1,
+          lastSkippedAt: serverTimestamp()
         });
         
-        // Next client takes current client's number
+        // Next client moves forward to current position
         transaction.update(nextClientRef, {
-          number: currentNumber
+          position: currentPosition
         });
         
-        // Queue doesn't move forward - it stays at current number
+        // Queue stays at current position (now serving the next person)
         transaction.update(queueRef, {
           updatedAt: serverTimestamp()
         });
       });
       
-      console.log(`⚠️ ${fullName} swapped with ${nextClientFullName}`);
-      alert(`⚠️ ${fullName} (#${currentNumber}) is now #${nextClientNumber}\n${nextClientFullName} (#${nextClientNumber}) is now #${currentNumber}`);
+      console.log(`⚠️ ${fullName} #${currentClient.number} (${skipCount + 1}/3 skips) swapped position with ${nextClientFullName} #${nextClientData.number}`);
       
     } catch (error) {
       console.error('❌ Failed to skip:', error);
@@ -585,10 +641,7 @@ export default function BarberQueueAdmin() {
     const fullName = `${client.firstName} ${client.lastName}`;
     const phoneNumber = client.phoneNumber;
     
-    // Create tel: link for calling
     const telLink = `tel:${phoneNumber}`;
-    
-    // Open phone dialer
     window.location.href = telLink;
     
     console.log(`📢 Calling ${fullName} at ${phoneNumber}`);
@@ -597,26 +650,23 @@ export default function BarberQueueAdmin() {
   // ===== RENDER =====
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <Scissors className="w-12 h-12 text-slate-400 animate-pulse mx-auto mb-4" />
-          <p className="text-slate-600">Loading admin panel...</p>
+          <Scissors className="w-12 h-12 text-amber-400 animate-pulse mx-auto mb-4" />
+          <p className="text-slate-400">Loading admin panel...</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-950">
       <AdminHeader queueOpen={queueOpen} onToggleQueue={handleToggleQueue} />
       
-      {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Queue Controls */}
         <QueueControls
           queueOpen={queueOpen}
-          currentNumber={currentNumber}
+          currentPosition={currentPosition}
           hasWaitingClients={allWaitingClients.length > 0}
           onToggleQueue={handleToggleQueue}
           onStartService={handleStartService}
@@ -624,7 +674,6 @@ export default function BarberQueueAdmin() {
           loading={actionLoading}
         />
         
-        {/* Current Client - BIG */}
         <CurrentClient
           client={currentClient}
           onDone={handleDone}
@@ -633,31 +682,27 @@ export default function BarberQueueAdmin() {
           loading={actionLoading}
         />
         
-        {/* Quick Stats */}
         <QuickStats
           waiting={waitingCount}
           avgServiceTime={avgServiceTime}
           estimatedTotal={estimatedTotal}
         />
         
-        {/* Waiting List */}
         <WaitingList
           clients={waitingClients}
           onCallClient={handleCallClient}
           loading={actionLoading}
         />
         
-        {/* Footer Info */}
-        <Alert className="bg-blue-50 border-blue-200">
-          <Lightbulb className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800 text-sm">
-          <strong>Workflow:</strong> Press "Start Service" to begin. Tap "Done" after each client. Use "Call" to dial client's phone number.
+        <Alert className="bg-slate-800/50 border-slate-700">
+          <Lightbulb className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-slate-300 text-sm">
+            <strong>Skip Logic:</strong> 1st & 2nd skip = move back 1 position (ticket # stays same). 3rd skip = remove (no-show).
           </AlertDescription>
         </Alert>
         
-        {/* Debug Info */}
-        <div className="bg-slate-800 text-white p-3 rounded text-xs font-mono">
-          <div>Current: #{currentNumber} | Last: #{lastNumber}</div>
+        <div className="bg-slate-900 text-white p-3 rounded text-xs font-mono border border-slate-800">
+          <div>Current Position: #{currentPosition} | Last Ticket: #{lastNumber}</div>
           <div>Total Waiting: {waitingCount} | Next Waiting: {waitingClients.length}</div>
           <div>Avg: {avgServiceTime}min | Est Total: ~{estimatedTotal}min</div>
         </div>
