@@ -1,7 +1,7 @@
 {
-    "name": "Barber Elite - Queue",
-    "short_name": "Queue",
-    "description": "Join the Barber Elite queue during Ramadan",
+    "name": "Melek Coiff",
+    "short_name": "Melek Coiff",
+    "description": "Système de Gestion de File d'Attente Ramadan pour Melek Coiff",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
