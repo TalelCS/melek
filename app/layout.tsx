@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   ],
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Melek Coiff',
   },
   formatDetection: {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Melek Coiff',
     title: {
-      default: 'Melek Coiffa',
+      default: 'Melek Coiff',
       template: '%s | Melek Coiff'
     },
     description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
