@@ -1589,16 +1589,8 @@ export default function BarberQueueAdmin() {
   // ===== RENDER =====
   if (loading) {
     return (
-      <div className="relative h-[100dvh] flex items-center justify-center overflow-hidden">
-        {/* Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url(/background.jpg)" }}
-        />
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/50" />
-        
-        <div className="text-center relative z-10">
+      <div className="relative min-h-screen flex items-center justify-center">
+        <div className="text-center">
           <Scissors className="w-12 h-12 text-amber-400 animate-pulse mx-auto mb-4" />
           <p className="text-white/80 text-lg" style={{ fontFamily: '"Raleway", sans-serif' }}>
             Chargement du panneau admin...
@@ -1610,22 +1602,14 @@ export default function BarberQueueAdmin() {
   
   return (
     <>
-      <div className="fixed inset-0 overflow-hidden">
-        {/* Background - Single layer */}
-        <div
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url(/background.jpg)" }}
-        />
-        
-        {/* Dark Overlay */}
-        <div className="fixed inset-0 bg-black/50" />
-
         {/* Content - Scrollable */}
-        <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden pb-32">
+        <div className="relative z-10">
           <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
             <AdminHeader queueOpen={queueOpen} currentView={currentView} />
-          </div>          
-          <div className="max-w-2xl mx-auto px-4 py-6">
+          </div>
+          <div className="max-w-2xl mx-auto px-4 py-6" style={{
+            paddingBottom: 'calc(8rem + env(safe-area-inset-bottom, 0px))'
+          }}>
             {currentView === 'controls' && (
               <ControlsTab
                 queueOpen={queueOpen}
@@ -1668,16 +1652,16 @@ export default function BarberQueueAdmin() {
 
           {/* Dock Navigation - Mobile Optimized */}
           <div className="fixed left-1/2 -translate-x-1/2 z-50 px-4" style={{
-  bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
-}}>            <Dock 
-              items={dockItems}
-              panelHeight={68}
-              baseItemSize={50}
-              magnification={70}
-            />
+            bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
+          }}>
+            <Dock 
+                items={dockItems}
+                panelHeight={68}
+                baseItemSize={50}
+                magnification={70}
+              />
           </div>
         </div>
-      </div>
 
       {/* AlertDialog */}
       <AlertDialog open={alertDialog.open} onOpenChange={(open) => {

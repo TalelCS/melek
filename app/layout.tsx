@@ -41,6 +41,7 @@ export const metadata: Metadata = {
     description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
   },
 };
+
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#0B1120' },
@@ -142,9 +143,19 @@ export default function RootLayout({
           media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
         />
       </head>
-      <body>
+      <body className="relative text-white">
+        {/* Global Background - Fixed behind all content */}
+        <div className="fixed inset-0 -z-10">
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url(/background.jpg)" }}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+
         <Analytics />
-        {children}</body>
+        {children}
+      </body>
     </html>
   );
 }

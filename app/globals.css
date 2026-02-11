@@ -124,6 +124,10 @@
   }
 }
 
+/* ============================================
+   CUSTOM ANIMATIONS
+   ============================================ */
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-6px); }
@@ -138,13 +142,10 @@
 
 @keyframes glow {
   0% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
-
   15% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.9); }
   30% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
-
   45% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.9); }
   60% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
-
   100% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
 }
 
@@ -159,63 +160,25 @@
 }
 
 /* ============================================
-   iOS PWA STATUS BAR & SCROLL BOUNCE FIXES
+   iOS PWA - CLEAN & SIMPLE
    ============================================ */
 
-   html {
-    background-color: #0B1120;
-    overscroll-behavior-y: none;
-  }
-  
-  body {
-    margin: 0;
-    padding: 0;
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
-    background: transparent;
-  }
-  
-  /* Fix 2: Safe area support for iOS notch */
-  @supports (padding: env(safe-area-inset-top)) {
-    body {
-      padding-top: env(safe-area-inset-top);
-    }
-  }
-  
-  /* Fix 3: Ensure app containers handle height properly */
-  .relative.h-\[100dvh\],
-  .relative.min-h-\[100dvh\] {
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-  
-  /* Fix 4: Prevent the double background issue */
-  #__next {
-    background: transparent;
-  }
-  
-  /* Fix 5: iOS PWA - Fill screen properly without breaking scroll */
-  @media (display-mode: standalone) {
-    html {
-      height: 100%;
-      background-color: #0B1120;
-    }
-    
-    body {
-      min-height: 100%;
-    }
-  }
+html {
+  min-height: 100%;
+  background-color: #0B1120;
+}
 
-  /* Fix for bottom safe area - extend background */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  /* Ensure containers extend into bottom safe area */
-  .fixed.inset-0,
-  .absolute.inset-0 {
-    bottom: calc(-1 * env(safe-area-inset-bottom));
-  }
-  
-  /* Add padding to scrollable content instead */
-  .overflow-y-auto {
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Safe area support for iOS notch */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
 }

@@ -20,9 +20,9 @@ export default function ComingSoon() {
 
   const [mounted, setMounted] = useState(false)
 
-  // Prevent scrolling on this page
+  // Allow natural scrolling
   useEffect(() => {
-    document.body.style.overflow = "hidden"
+    document.body.style.overflow = "auto"
     setMounted(true)
 
     return () => {
@@ -76,19 +76,12 @@ export default function ComingSoon() {
         rel="stylesheet"
       />
 
-      {/* Main Container */}
-      <div className="relative h-[100dvh] min-h-screen flex items-center justify-center overflow-hidden px-4" style={{ 
-  minHeight: '-webkit-fill-available'
-}}>
-        {/* Background */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url(/background.jpg)" }}
-        />
-
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/50" />
-
+      {/* REFACTORED: Natural document flow, background in layout.tsx */}
+      <div className="relative min-h-screen flex items-center justify-center px-4" style={{ 
+        minHeight: '-webkit-fill-available',
+        paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
+      }}>
         <div className="relative z-10 w-full max-w-5xl mx-auto text-center">
 
           {/* Logo */}
@@ -224,7 +217,7 @@ export default function ComingSoon() {
         </div>
       </div>
 
-      {/* Small Tailwind Utility for icons */}
+      {/* Icon Styles */}
       <style jsx>{`
         .icon-btn {
           width: 50px;

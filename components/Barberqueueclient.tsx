@@ -276,6 +276,44 @@ function ProgressSection({ initialPeopleAhead, peopleAhead }) {
   );
 }
 
+// ===== COMPONENT 4: PROGRESS SECTION =====
+function ProgressSection({ initialPeopleAhead, peopleAhead }) {
+  // Calculate progress based on user's personal queue progress
+  const served = Math.max(0, initialPeopleAhead - peopleAhead);
+  const progress = initialPeopleAhead > 0 ? (served / initialPeopleAhead) * 100 : 0;
+  
+  return (
+    <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
+              Votre progression :
+            </span>
+            <span className="font-bold text-white" style={{ fontFamily: '"Raleway", sans-serif' }}>
+              {served} / {initialPeopleAhead} servi(s)
+            </span>
+          </div>
+          
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          
+          <p className="text-xs text-white/60 text-center" style={{ fontFamily: '"Raleway", sans-serif' }}>
+            {peopleAhead === 0 
+              ? "C'est votre tour ! 🎉" 
+              : `${peopleAhead} personne${peopleAhead === 1 ? '' : 's'} avant votre tour`
+            }
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ===== MAIN APP COMPONENT =====
 export default function BarberQueueClient() {
   const [queueOpen, setQueueOpen] = useState(true);
@@ -837,16 +875,9 @@ export default function BarberQueueClient() {
           rel="stylesheet"
         />
         
-        <div className="relative h-[100dvh] flex items-center justify-center overflow-hidden">
-          {/* Background */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url(/background.jpg)" }}
-          />
-          {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-black/50" />
-          
-          <div className="text-center relative z-10">
+        {/* REFACTORED: Natural document flow, no fake containers */}
+        <div className="relative min-h-screen flex items-center justify-center">
+          <div className="text-center">
             <Scissors className="w-16 h-16 text-amber-400 animate-pulse mx-auto mb-4" />
             <p className="text-white/80 text-lg" style={{ fontFamily: '"Raleway", sans-serif' }}>
               Chargement de la file...
@@ -871,176 +902,170 @@ export default function BarberQueueClient() {
         rel="stylesheet"
       />
       
-      <div className="fixed inset-0 overflow-hidden">
-        {/* Background - Single layer */}
-        <div
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url(/background.jpg)" }}
-        />
+      {/* REFACTORED STRUCTURE: Natural document flow */}
+      {/* Background is now in layout.tsx, not here */}
+      <div className="relative z-10">
+        {/* Safe area padding */}
+        <div className="max-w-md mx-auto px-4 py-6 text-center" style={{
+          paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
+        }}>
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg flex items-center justify-center">
+              <img src="/log.png" alt="Melek Coiff" className="w-full h-full object-contain rounded-md" />
+            </div>
+            
+            <div className="text-left">
+              <h1 className="text-2xl font-bold text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
+                Melek Coiff
+              </h1>
+              <p className="text-sm text-amber-400" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                Système de file Ramadan
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-center gap-3 text-amber-400">
+            <span>🌙</span>
+            <div className="h-px bg-white/20 flex-1"></div>
+            <span className="text-sm text-white/60" style={{ fontFamily: '"Amiri", serif' }}>
+              رمضان كريم
+            </span>
+            <div className="h-px bg-white/20 flex-1"></div>
+            <span>✨</span>
+          </div>
+        </div>
         
-        {/* Dark Overlay */}
-        <div className="fixed inset-0 bg-black/50" />
-
-        {/* Scrollable Content Container */}
-        <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
-          <div className="max-w-md mx-auto px-4 py-6 text-center" style={{
-            paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
-          }}>
-            <div className="flex items-center justify-center gap-4 mb-3">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg flex items-center justify-center">
-                <img src="/log.png" alt="Melek Coiff" className="w-full h-full object-contain rounded-md" />
-              </div>
-              
-              <div className="text-left">
-                <h1 className="text-2xl font-bold text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
-                  Melek Coiff
-                </h1>
-                <p className="text-sm text-amber-400" style={{ fontFamily: '"Raleway", sans-serif' }}>
-                  Système de file Ramadan
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-center gap-3 text-amber-400">
-              <span>🌙</span>
-              <div className="h-px bg-white/20 flex-1"></div>
-              <span className="text-sm text-white/60" style={{ fontFamily: '"Amiri", serif' }}>
-                رمضان كريم
-              </span>
-              <div className="h-px bg-white/20 flex-1"></div>
-              <span>✨</span>
-            </div>
-          </div>
+        {/* Main content area - natural scroll */}
+        <div className="max-w-md mx-auto px-4 py-6 space-y-6" style={{
+          paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))'
+        }}>
+          <StatusBanner 
+            queueOpen={queueOpen}
+            inQueue={inQueue}
+            isNext={isNext}
+            isAlmostNext={isAlmostNext}
+          />
           
-          <div className="max-w-md mx-auto px-4 py-6 space-y-6 pb-20">
-            <StatusBanner 
+          {!inQueue ? (
+            <JoinQueueForm
+              firstName={firstName}
+              setFirstName={setFirstName}
+              lastName={lastName}
+              setLastName={setLastName}
+              phoneNumber={phoneNumber}
+              setPhoneNumber={setPhoneNumber}
               queueOpen={queueOpen}
-              inQueue={inQueue}
-              isNext={isNext}
-              isAlmostNext={isAlmostNext}
+              onJoin={handleJoinQueue}
+              joining={joining}
             />
-            
-            {!inQueue ? (
-              <JoinQueueForm
-                firstName={firstName}
-                setFirstName={setFirstName}
-                lastName={lastName}
-                setLastName={setLastName}
-                phoneNumber={phoneNumber}
-                setPhoneNumber={setPhoneNumber}
-                queueOpen={queueOpen}
-                onJoin={handleJoinQueue}
-                joining={joining}
-              />
-            ) : (
-              <QueueStatus
-                firstName={firstName}
-                lastName={lastName}
-                phoneNumber={phoneNumber}
-                userNumber={userNumber}
-                peopleAhead={peopleAhead}
-                estimatedWait={estimatedWait}
-                onLeave={handleLeaveQueue}
-                leaving={leaving}
-              />
-            )}
-            
-            {inQueue && (
-              <ProgressSection
-                initialPeopleAhead={initialPeopleAhead}
-                peopleAhead={peopleAhead}
-              />
-            )}
-            
-            <InstallPWA />
-
-            {/* Social Media Footer */}
-            <div className="mt-8 space-y-6">
-              <div className="text-center">
-                <p className="text-lg text-white mb-5" style={{ fontFamily: '"Raleway", sans-serif' }}>
-                  Suivez-nous
-                </p>
-
-                <div className="flex justify-center gap-6">
-                  <a
-                    href="https://www.instagram.com/mvleek__coiff_93/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="icon-btn"
-                    aria-label="Instagram"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                    </svg>
-                  </a>
-
-                  <a
-                    href="https://www.facebook.com/malek.boulares.50"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="icon-btn"
-                    aria-label="Facebook"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                    </svg>
-                  </a>
-
-                  <a 
-                    href="tel:+21652265816" 
-                    className="icon-btn"
-                    aria-label="Phone"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                    </svg>
-                  </a>
-
-                  <a
-                    href="https://maps.app.goo.gl/XQp8N7fo7aTGjnRi7"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="icon-btn"
-                    aria-label="Location"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-
-              {/* Ramadan */}
-              <div className="flex items-center justify-center gap-4 text-white pb-8">
-                <span className="text-2xl">🌙</span>
-                <div className="h-px bg-white/40 w-16 md:w-24" />
-                <span
-                  className="text-lg md:text-xl"
-                  style={{ fontFamily: '"Amiri", serif' }}
-                >
-                  رمضان كريم
-                </span>
-                <div className="h-px bg-white/40 w-16 md:w-24" />
-                <span className="text-2xl">✨</span>
-              </div>
-            </div>
-          </div>
-          
-          {inQueue && (
-            <NotificationPrompt
-              userName={`${firstName} ${lastName}`}
-              onPermissionChange={(granted) => {
-                setNotificationsGranted(granted);
-              }}
+          ) : (
+            <QueueStatus
+              firstName={firstName}
+              lastName={lastName}
+              phoneNumber={phoneNumber}
+              userNumber={userNumber}
+              peopleAhead={peopleAhead}
+              estimatedWait={estimatedWait}
+              onLeave={handleLeaveQueue}
+              leaving={leaving}
             />
           )}
+          
+          {inQueue && (
+            <ProgressSection
+              initialPeopleAhead={initialPeopleAhead}
+              peopleAhead={peopleAhead}
+            />
+          )}
+          
+          <InstallPWA />
+
+          {/* Social Media Footer */}
+          <div className="mt-8 space-y-6">
+            <div className="text-center">
+              <p className="text-lg text-white mb-5" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                Suivez-nous
+              </p>
+
+              <div className="flex justify-center gap-6">
+                <a
+                  href="https://www.instagram.com/mvleek__coiff_93/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="icon-btn"
+                  aria-label="Instagram"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </a>
+
+                <a
+                  href="https://www.facebook.com/malek.boulares.50"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="icon-btn"
+                  aria-label="Facebook"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                  </svg>
+                </a>
+
+                <a 
+                  href="tel:+21652265816" 
+                  className="icon-btn"
+                  aria-label="Phone"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </a>
+
+                <a
+                  href="https://maps.app.goo.gl/XQp8N7fo7aTGjnRi7"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="icon-btn"
+                  aria-label="Location"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Ramadan */}
+            <div className="flex items-center justify-center gap-4 text-white pb-8">
+              <span className="text-2xl">🌙</span>
+              <div className="h-px bg-white/40 w-16 md:w-24" />
+              <span
+                className="text-lg md:text-xl"
+                style={{ fontFamily: '"Amiri", serif' }}
+              >
+                رمضان كريم
+              </span>
+              <div className="h-px bg-white/40 w-16 md:w-24" />
+              <span className="text-2xl">✨</span>
+            </div>
+          </div>
         </div>
+        
+        {inQueue && (
+          <NotificationPrompt
+            userName={`${firstName} ${lastName}`}
+            onPermissionChange={(granted) => {
+              setNotificationsGranted(granted);
+            }}
+          />
+        )}
       </div>
 
-      {/* AlertDialog */}
+      {/* AlertDialog - UNCHANGED */}
       <AlertDialog open={alertDialog.open} onOpenChange={(open) => {
         if (!open && !alertDialog.showCancel) {
           setAlertDialog(prev => ({ ...prev, open: false }));
@@ -1080,7 +1105,7 @@ export default function BarberQueueClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Feedback Dialog */}
+      {/* Feedback Dialog - UNCHANGED */}
       <AlertDialog open={showFeedback} onOpenChange={setShowFeedback}>
         <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md">
           <AlertDialogHeader className="space-y-3">
