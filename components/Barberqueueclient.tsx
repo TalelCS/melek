@@ -318,12 +318,9 @@ export default function BarberQueueClient() {
   const isNext = peopleAhead === 0 && inQueue;
   const isAlmostNext = peopleAhead <= 1 && peopleAhead > 0 && inQueue;
 
-  // Prevent scrolling
+  // Allow natural scrolling
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    document.body.style.overflow = "auto";
   }, []);
 
   useEffect(() => {
@@ -874,20 +871,18 @@ export default function BarberQueueClient() {
         rel="stylesheet"
       />
       
-      <div className="relative h-[100dvh] min-h-screen overflow-hidden" style={{ 
-          minHeight: '-webkit-fill-available'
-        }}>
-        {/* Background */}
+      <div className="fixed inset-0 overflow-hidden">
+        {/* Background - Single layer */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url(/background.jpg)" }}
         />
         
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="fixed inset-0 bg-black/50" />
 
         {/* Scrollable Content Container */}
-        <div className="relative z-10 h-full overflow-y-auto">
+        <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
           <div className="max-w-md mx-auto px-4 py-6 text-center">
             <div className="flex items-center justify-center gap-4 mb-3">
               <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg flex items-center justify-center">

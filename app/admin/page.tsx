@@ -1610,9 +1610,8 @@ export default function BarberQueueAdmin() {
   
   return (
     <>
-      <div className="relative min-h-[100dvh] min-h-screen overflow-hidden" style={{ 
-          minHeight: '-webkit-fill-available'
-        }}>        {/* Background */}
+      <div className="fixed inset-0 overflow-hidden">
+        {/* Background - Single layer */}
         <div
           className="fixed inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url(/background.jpg)" }}
@@ -1621,8 +1620,8 @@ export default function BarberQueueAdmin() {
         {/* Dark Overlay */}
         <div className="fixed inset-0 bg-black/50" />
 
-        {/* Content */}
-        <div className="relative z-10 min-h-[100dvh] pb-32">
+        {/* Content - Scrollable */}
+        <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden pb-32">
           <AdminHeader queueOpen={queueOpen} currentView={currentView} />
           
           <div className="max-w-2xl mx-auto px-4 py-6">
