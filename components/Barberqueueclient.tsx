@@ -276,44 +276,6 @@ function ProgressSection({ initialPeopleAhead, peopleAhead }) {
   );
 }
 
-// ===== COMPONENT 4: PROGRESS SECTION =====
-function ProgressSection({ initialPeopleAhead, peopleAhead }) {
-  // Calculate progress based on user's personal queue progress
-  const served = Math.max(0, initialPeopleAhead - peopleAhead);
-  const progress = initialPeopleAhead > 0 ? (served / initialPeopleAhead) * 100 : 0;
-  
-  return (
-    <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg">
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
-              Votre progression :
-            </span>
-            <span className="font-bold text-white" style={{ fontFamily: '"Raleway", sans-serif' }}>
-              {served} / {initialPeopleAhead} servi(s)
-            </span>
-          </div>
-          
-          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-            <div 
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          
-          <p className="text-xs text-white/60 text-center" style={{ fontFamily: '"Raleway", sans-serif' }}>
-            {peopleAhead === 0 
-              ? "C'est votre tour ! 🎉" 
-              : `${peopleAhead} personne${peopleAhead === 1 ? '' : 's'} avant votre tour`
-            }
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ===== MAIN APP COMPONENT =====
 export default function BarberQueueClient() {
   const [queueOpen, setQueueOpen] = useState(true);
