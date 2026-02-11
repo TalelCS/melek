@@ -41,9 +41,11 @@ export const metadata: Metadata = {
     description: 'Système de Gestion de File d\'Attente Ramadan pour Melek Coiff',
   },
 };
-
 export const viewport: Viewport = {
-  themeColor: '#1e293b',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#0B1120' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B1120' }
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -60,8 +62,9 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         {/* PWA Primary Color */}
-        <meta name="theme-color" content="#1e293b" />
-        
+        <meta name="theme-color" content="#0B1120" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
         {/* Apple Splash Screen - Optional but recommended */}
         <link
           rel="apple-touch-startup-image"

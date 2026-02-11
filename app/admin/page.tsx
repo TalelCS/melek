@@ -18,6 +18,23 @@ import { Scissors, Users, Clock, AlertCircle, Check, SkipForward, Play, Pause, R
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, collection, query, where, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Dock from './Dock';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // ===== TYPES =====
 type TabView = 'controls' | 'queue' | 'add' | 'stats';
@@ -206,7 +223,116 @@ function ControlsTab({
   );
 }
 
-// ===== TAB 2: QUEUE MANAGEMENT =====
+// ===== SORTABLE CLIENT ITEM COMPONENT =====
+function SortableClientItem({ 
+  client, 
+  onCall, 
+  onDelete, 
+  isEditMode, 
+  isDeleting, 
+  loading 
+}: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: client.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const skipCount = client.skipCount || 0;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-4 bg-white/5 backdrop-blur-sm rounded-lg border transition-all ${
+        isEditMode 
+          ? 'border-amber-500/50 hover:border-amber-500/70 cursor-move' 
+          : 'border-white/10 hover:border-white/20'
+      } ${isDeleting ? 'opacity-50' : ''} ${isDragging ? 'shadow-2xl shadow-amber-500/50 z-50' : ''}`}
+    >
+      {/* Drag Handle (Edit Mode) */}
+      {isEditMode && (
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="flex flex-col gap-0.5 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <div className="flex gap-0.5">
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+          </div>
+          <div className="flex gap-0.5">
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+          </div>
+          <div className="flex gap-0.5">
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+            <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+          </div>
+        </div>
+      )}
+      
+      {/* Client Info */}
+      <div className="flex items-center gap-4 flex-1">
+        <div className="text-3xl font-bold text-amber-400 w-16" style={{ fontFamily: '"Orbitron", monospace' }}>
+          #{client.number}
+        </div>
+        <div className="flex-1">
+          <div className="text-xl font-semibold text-white flex items-center gap-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
+            {client.firstName} {client.lastName}
+            {skipCount > 0 && (
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">
+                {skipCount}x reporté
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-white/60 flex items-center gap-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
+            <PhoneCall className="w-4 h-4" />
+            {client.phoneNumber}
+          </div>
+        </div>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        {isEditMode ? (
+          <Button
+            onClick={() => onDelete(client.id, `${client.firstName} ${client.lastName}`)}
+            disabled={isDeleting || loading}
+            variant="outline"
+            className="h-12 px-4 border-2 border-red-500 text-red-400 hover:bg-red-500/10 font-semibold disabled:opacity-50 bg-white/5"
+            style={{ fontFamily: '"Raleway", sans-serif' }}
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            {isDeleting ? 'Suppression...' : 'Supprimer'}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => onCall(client)}
+            disabled={loading}
+            variant="outline"
+            className="h-12 px-6 border-2 border-blue-500 text-blue-400 hover:bg-blue-500/10 font-semibold disabled:opacity-50 bg-white/5"
+            style={{ fontFamily: '"Raleway", sans-serif' }}
+          >
+            <PhoneCall className="w-4 h-4 mr-2" />
+            Appeler
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ===== TAB 2: QUEUE MANAGEMENT WITH DRAG & DROP =====
 function QueueTab({ 
   currentClient, 
   waitingClients,
@@ -216,6 +342,110 @@ function QueueTab({
   onCall, 
   loading 
 }: any) {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [localWaitingClients, setLocalWaitingClients] = useState([]);
+  const [deletingClientId, setDeletingClientId] = useState(null);
+  const [reordering, setReordering] = useState(false);
+
+  // Sync local state with prop changes
+  useEffect(() => {
+    setLocalWaitingClients(waitingClients);
+  }, [waitingClients]);
+
+  // Drag & Drop Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setLocalWaitingClients((items) => {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
+
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    const reason = prompt(
+      `Pourquoi retirez-vous ${clientName} de la file ?\n(Ce message sera envoyé au client)`,
+      'Modification de la file d\'attente'
+    );
+    
+    if (reason === null) return; // User cancelled
+    
+    if (!reason.trim()) {
+      alert('Veuillez fournir une raison pour retirer ce client.');
+      return;
+    }
+  
+    try {
+      setDeletingClientId(clientId);
+      
+      const clientRef = doc(db, 'queues', 'today', 'clients', clientId);
+      await updateDoc(clientRef, {
+        status: 'removed_by_admin',
+        removalReason: reason.trim(),
+        removedAt: serverTimestamp()
+      });
+      
+      console.log(`✅ Client ${clientName} retiré de la file: ${reason}`);
+    } catch (error) {
+      console.error('❌ Échec de suppression:', error);
+      alert('Échec de la suppression du client. Veuillez réessayer.');
+    } finally {
+      setDeletingClientId(null);
+    }
+  };
+
+  const handleReorderClients = async () => {
+    try {
+      setReordering(true);
+      
+      const batch = writeBatch(db);
+      
+      // Update positions for all clients in the new order
+      localWaitingClients.forEach((client, index) => {
+        const clientRef = doc(db, 'queues', 'today', 'clients', client.id);
+        const newPosition = currentClient ? currentClient.position + index + 1 : index + 1;
+        batch.update(clientRef, {
+          position: newPosition,
+          updatedAt: serverTimestamp()
+        });
+      });
+      
+      await batch.commit();
+      
+      console.log('✅ Ordre de la file mis à jour');
+      setIsEditMode(false);
+    } catch (error) {
+      console.error('❌ Échec de réorganisation:', error);
+      alert('Échec de la mise à jour de l\'ordre. Veuillez réessayer.');
+      // Reset to original order
+      setLocalWaitingClients(waitingClients);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setLocalWaitingClients(waitingClients);
+    setIsEditMode(false);
+  };
+
   if (!currentClient && allWaitingClients.length === 0) {
     return (
       <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
@@ -311,58 +541,97 @@ function QueueTab({
         </Card>
       )}
 
-      {/* Waiting List */}
+      {/* Waiting List with Drag & Drop */}
       {waitingClients.length > 0 ? (
         <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
-              <Users className="w-5 h-5" />
-              Liste d'Attente ({waitingClients.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2 text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
+                <Users className="w-5 h-5" />
+                Liste d'Attente ({localWaitingClients.length})
+              </CardTitle>
+              
+              {!isEditMode ? (
+                <Button
+                  onClick={() => setIsEditMode(true)}
+                  variant="outline"
+                  className="h-10 px-4 border-2 border-amber-500 text-amber-400 hover:bg-amber-500/10 font-semibold bg-white/5"
+                  style={{ fontFamily: '"Raleway", sans-serif' }}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Modifier
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCancelEdit}
+                    disabled={reordering}
+                    variant="outline"
+                    className="h-10 px-4 border-2 border-zinc-600 text-zinc-300 hover:bg-zinc-600/10 font-semibold bg-white/5"
+                    style={{ fontFamily: '"Raleway", sans-serif' }}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleReorderClients}
+                    disabled={reordering}
+                    className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 font-semibold disabled:opacity-50"
+                    style={{ fontFamily: '"Raleway", sans-serif' }}
+                  >
+                    {reordering ? 'Enregistrement...' : 'Enregistrer'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           
           <CardContent>
+            {isEditMode && (
+              <Alert className="mb-4 bg-amber-500/10 backdrop-blur-md border border-amber-500/30">
+                <Lightbulb className="h-4 w-4 text-amber-400" />
+                <AlertDescription className="text-amber-200 text-sm" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                  <strong>Mode Modification:</strong> Glissez-déposez les clients pour réorganiser ou cliquez sur supprimer.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {waitingClients.map((client: any) => {
-                const skipCount = client.skipCount || 0;
-                return (
-                  <div
-                    key={client.id}
-                    className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+              {isEditMode ? (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={localWaitingClients.map(c => c.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="text-3xl font-bold text-amber-400 w-16" style={{ fontFamily: '"Orbitron", monospace' }}>
-                        #{client.number}
-                      </div>
-                      <div>
-                        <div className="text-xl font-semibold text-white flex items-center gap-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
-                          {client.firstName} {client.lastName}
-                          {skipCount > 0 && (
-                            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">
-                              {skipCount}x reporté
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-white/60 flex items-center gap-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
-                          <PhoneCall className="w-4 h-4" />
-                          {client.phoneNumber}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      onClick={() => onCall(client)}
-                      disabled={loading}
-                      variant="outline"
-                      className="h-12 px-6 border-2 border-blue-500 text-blue-400 hover:bg-blue-500/10 font-semibold disabled:opacity-50 bg-white/5"
-                      style={{ fontFamily: '"Raleway", sans-serif' }}
-                    >
-                      <PhoneCall className="w-4 h-4 mr-2" />
-                      Appeler
-                    </Button>
-                  </div>
-                );
-              })}
+                    {localWaitingClients.map((client: any) => (
+                      <SortableClientItem
+                        key={client.id}
+                        client={client}
+                        onCall={onCall}
+                        onDelete={handleDeleteClient}
+                        isEditMode={isEditMode}
+                        isDeleting={deletingClientId === client.id}
+                        loading={reordering}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                localWaitingClients.map((client: any) => (
+                  <SortableClientItem
+                    key={client.id}
+                    client={client}
+                    onCall={onCall}
+                    onDelete={handleDeleteClient}
+                    isEditMode={isEditMode}
+                    isDeleting={deletingClientId === client.id}
+                    loading={loading}
+                  />
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -377,12 +646,14 @@ function QueueTab({
       )}
 
       {/* Info Alert */}
-      <Alert className="bg-blue-500/10 backdrop-blur-md border border-blue-500/30">
-        <Lightbulb className="h-4 w-4 text-blue-400" />
-        <AlertDescription className="text-blue-200 text-sm" style={{ fontFamily: '"Raleway", sans-serif' }}>
-          <strong>Logique de Report:</strong> 1er & 2e report = recule d'1 position (le n° de ticket reste). 3e report = retrait (absent).
-        </AlertDescription>
-      </Alert>
+      {!isEditMode && (
+        <Alert className="bg-blue-500/10 backdrop-blur-md border border-blue-500/30">
+          <Lightbulb className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-blue-200 text-sm" style={{ fontFamily: '"Raleway", sans-serif' }}>
+            <strong>Logique de Report:</strong> 1er & 2e report = recule d'1 position (le n° de ticket reste). 3e report = retrait (absent).
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }
@@ -501,24 +772,224 @@ function AddClientTab({ onAddClient, loading, queueOpen }: any) {
 
 // ===== TAB 4: STATS & FEEDBACK =====
 function StatsTab() {
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalFeedback: 0,
+    averageRating: 0,
+    ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+  });
+
+  useEffect(() => {
+    const feedbackRef = collection(db, 'feedback');
+    const q = query(feedbackRef, orderBy('submittedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const feedback = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setFeedbackList(feedback);
+      
+      // Calculate stats
+      if (feedback.length > 0) {
+        const total = feedback.length;
+        const sum = feedback.reduce((acc, f) => acc + (f.rating || 0), 0);
+        const average = (sum / total).toFixed(1);
+        
+        const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        feedback.forEach(f => {
+          if (f.rating >= 1 && f.rating <= 5) {
+            breakdown[f.rating]++;
+          }
+        });
+        
+        setStats({
+          totalFeedback: total,
+          averageRating: parseFloat(average),
+          ratingBreakdown: breakdown
+        });
+      }
+      
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const renderStars = (rating) => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={star <= rating ? 'text-yellow-400' : 'text-gray-600'}>
+            ★
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
+        <CardContent className="py-12 text-center">
+          <Clock className="w-12 h-12 text-white/40 animate-spin mx-auto mb-4" />
+          <p className="text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
+            Chargement des statistiques...
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Overall Stats */}
       <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
         <CardHeader>
           <CardTitle className="text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
-            Statistiques & Analytiques
+            Vue d'ensemble
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
-            <AlertCircle className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <p className="text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
-              Fonctionnalité à venir
-            </p>
-            <p className="text-white/40 text-sm mt-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
-              Statistiques, analytiques et avis des clients seront disponibles ici
-            </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 rounded-lg p-4 text-center">
+              <div className="text-4xl font-bold text-white mb-2" style={{ fontFamily: '"Orbitron", monospace' }}>
+                {stats.totalFeedback}
+              </div>
+              <div className="text-sm text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                Total Avis
+              </div>
+            </div>
+            
+            <div className="bg-white/5 rounded-lg p-4 text-center">
+              <div className="text-4xl font-bold text-amber-400 mb-2" style={{ fontFamily: '"Orbitron", monospace' }}>
+                {stats.averageRating}
+              </div>
+              <div className="text-sm text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                Note Moyenne
+              </div>
+              <div className="mt-2">
+                {renderStars(Math.round(stats.averageRating))}
+              </div>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Rating Breakdown */}
+      <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-white" style={{ fontFamily: '"Playfair Display", serif' }}>
+            Répartition des Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[5, 4, 3, 2, 1].map((rating) => {
+              const count = stats.ratingBreakdown[rating];
+              const percentage = stats.totalFeedback > 0 
+                ? ((count / stats.totalFeedback) * 100).toFixed(0) 
+                : 0;
+              
+              return (
+                <div key={rating} className="flex items-center gap-3">
+                  <div className="flex gap-0.5 w-24">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={star <= rating ? 'text-yellow-400 text-sm' : 'text-gray-600 text-sm'}>
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="flex-1 bg-white/10 rounded-full h-6 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                      style={{ width: `${percentage}%` }}
+                    >
+                      {count > 0 && (
+                        <span className="text-xs font-bold text-black" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                          {count}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-white/60 w-12 text-right" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                    {percentage}%
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Feedback List */}
+      <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: '"Playfair Display", serif' }}>
+            <Users className="w-5 h-5" />
+            Avis des Clients ({feedbackList.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {feedbackList.length === 0 ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 text-white/40 mx-auto mb-3" />
+              <p className="text-white/60" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                Aucun avis pour le moment
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+              {feedbackList.map((feedback) => (
+                <div
+                  key={feedback.id}
+                  className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-4 hover:border-white/20 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="text-lg font-semibold text-white" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                        {feedback.firstName} {feedback.lastName}
+                      </div>
+                      <div className="text-sm text-white/60 flex items-center gap-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                        <PhoneCall className="w-3 h-3" />
+                        {feedback.phoneNumber}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {renderStars(feedback.rating)}
+                      <div className="text-xs text-white/40 mt-1" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                        {formatDate(feedback.submittedAt)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {feedback.review && (
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <p className="text-white/80 text-sm italic" style={{ fontFamily: '"Raleway", sans-serif' }}>
+                        "{feedback.review}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -1139,8 +1610,9 @@ export default function BarberQueueAdmin() {
   
   return (
     <>
-      <div className="relative min-h-[100dvh] overflow-hidden">
-        {/* Background */}
+      <div className="relative min-h-[100dvh] min-h-screen overflow-hidden" style={{ 
+          minHeight: '-webkit-fill-available'
+        }}>        {/* Background */}
         <div
           className="fixed inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url(/background.jpg)" }}
@@ -1195,7 +1667,7 @@ export default function BarberQueueAdmin() {
           </div>
 
           {/* Dock Navigation - Mobile Optimized */}
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4">
             <Dock 
               items={dockItems}
               panelHeight={68}

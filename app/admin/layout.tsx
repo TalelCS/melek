@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ],
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Barber Admin',
   },
   formatDetection: {
@@ -29,7 +29,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#334155',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#0B1120' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B1120' }
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Scissors, Clock, Users, AlertCircle } from 'lucide-react';
+import { Scissors, Clock, Users, AlertCircle, PhoneCall } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, getDocs } from 'firebase/firestore';
 import { collection, query, where, onSnapshot as onSnapshotCollection } from 'firebase/firestore';
 import InstallPWA from '@/components/installPWA';
@@ -446,6 +446,9 @@ export default function BarberQueueClient() {
         setClientId("");
         setUserNumber(null);
         setUserPosition(null);
+        setFirstName("");
+        setLastName("");
+        setPhoneNumber("");
         setAlertDialog({
           open: true,
           title: 'Retiré de la file',
@@ -462,6 +465,7 @@ export default function BarberQueueClient() {
         setUserPosition(data.position);
       }
   
+      // Handle different status changes
       if (data.status === "done") {
         localStorage.removeItem("queueClient");
         setInQueue(false);
@@ -472,18 +476,98 @@ export default function BarberQueueClient() {
         // Show feedback dialog
         setShowFeedback(true);
       } else if (data.status === "no_show") {
+        // Send push notification if enabled
+        if (canSendNotifications()) {
+          try {
+            new Notification("Melek Coiff - File d'Attente", {
+              body: "Vous avez été marqué comme absent après 3 reports.",
+              icon: "/log.png",
+              badge: "/log.png",
+              tag: "queue-no-show",
+            });
+          } catch (error) {
+            console.log("Notification failed:", error);
+          }
+        }
+        
         localStorage.removeItem("queueClient");
         setInQueue(false);
         setClientId("");
         setUserNumber(null);
         setUserPosition(null);
+        setFirstName("");
+        setLastName("");
+        setPhoneNumber("");
         setAlertDialog({
           open: true,
           title: 'Absence signalée',
-          description: '⚠️ Vous avez été marqué comme absent après 3 reports. Veuillez parler au coiffeur.',
+          description: '⚠️ Vous avez été marqué comme absent après 3 reports. Veuillez parler au coiffeur si c\'était une erreur.',
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
+      } else if (data.status === "removed_by_admin") {
+        // Get the removal reason
+        const reason = data.removalReason || "Aucune raison spécifiée";
+        
+        // Send push notification if enabled
+        if (canSendNotifications()) {
+          try {
+            new Notification("Melek Coiff - File d'Attente", {
+              body: `Vous avez été retiré de la file. Raison: ${reason}`,
+              icon: "/log.png",
+              badge: "/log.png",
+              tag: "queue-removed",
+            });
+          } catch (error) {
+            console.log("Notification failed:", error);
+          }
+        }
+        
+        localStorage.removeItem("queueClient");
+        setInQueue(false);
+        setClientId("");
+        setUserNumber(null);
+        setUserPosition(null);
+        setFirstName("");
+        setLastName("");
+        setPhoneNumber("");
+        
+        setAlertDialog({
+          open: true,
+          title: 'Retiré par l\'administrateur',
+          description: (
+            <div className="space-y-3">
+              <p>⚠️ Vous avez été retiré de la file d'attente par l'administrateur.</p>
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                <p className="text-sm font-semibold text-amber-400 mb-1">Raison:</p>
+                <p className="text-sm text-white">{reason}</p>
+              </div>
+              <p className="text-sm">Si vous pensez que c'est une erreur, veuillez contacter le salon:</p>
+              <a 
+                href="tel:+21652265816" 
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                <PhoneCall className="w-4 h-4" />
+                Appeler le salon
+              </a>
+            </div>
+          ),
+          action: () => setAlertDialog(prev => ({ ...prev, open: false })),
+          showCancel: false,
+        });
+      } else if (data.status === "left") {
+        // Handle if they left the queue themselves
+        localStorage.removeItem("queueClient");
+        setInQueue(false);
+        setClientId("");
+        setUserNumber(null);
+        setUserPosition(null);
+        setFirstName("");
+        setLastName("");
+        setPhoneNumber("");
       }
     });
   
@@ -790,7 +874,9 @@ export default function BarberQueueClient() {
         rel="stylesheet"
       />
       
-      <div className="relative h-[100dvh] overflow-hidden">
+      <div className="relative h-[100dvh] min-h-screen overflow-hidden" style={{ 
+          minHeight: '-webkit-fill-available'
+        }}>
         {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -1014,7 +1100,7 @@ export default function BarberQueueClient() {
             <div className="flex justify-center gap-2 space-y-2 text-center">
               <StarRating 
                 defaultValue={3}
-                onRate={() => setRating(`${rating}`)}
+                onRate={(newRating) => setRating(newRating)}
               />
             </div>
 

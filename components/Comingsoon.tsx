@@ -77,8 +77,9 @@ export default function ComingSoon() {
       />
 
       {/* Main Container */}
-      <div className="relative h-[100dvh] flex items-center justify-center overflow-hidden px-4">
-
+      <div className="relative h-[100dvh] min-h-screen flex items-center justify-center overflow-hidden px-4" style={{ 
+  minHeight: '-webkit-fill-available'
+}}>
         {/* Background */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
