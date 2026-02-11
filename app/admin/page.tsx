@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Scissors, Users, Clock, AlertCircle, Check, SkipForward, Play, Pause, RefreshCw, PhoneCall, Lightbulb, Settings, UserPlus, List, BarChart } from 'lucide-react';
+import { Scissors, Users, Clock, AlertCircle, Check, SkipForward, Play, Pause, RefreshCw, PhoneCall, Lightbulb, Settings, UserPlus, List, BarChart, Home } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, collection, query, where, orderBy, limit, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Dock from './Dock';
@@ -1565,7 +1565,7 @@ export default function BarberQueueAdmin() {
   // ===== DOCK ITEMS =====
   const dockItems = [
     {
-      icon: <Settings size={18} />,
+      icon: <Home size={18} />,
       label: 'Contrôles',
       onClick: () => setCurrentView('controls')
     },

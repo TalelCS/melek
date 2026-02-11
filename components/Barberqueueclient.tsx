@@ -23,6 +23,11 @@ import { QueueNotifications, canSendNotifications } from '@/lib/notifications';
 import { StarRating } from "@/components/ui/star-rating";
 import { db } from '@/lib/firebase';
 
+// ── CHANGE 1: StatusBanner now uses a self-contained banner-shake animation
+// instead of the global shake-glow class. Reasons:
+//   - shake-glow applies a green box-shadow (success colour) on an error state
+//   - box-shadow on the Alert wrapper bleeds outside its border, looking messy
+//   - The new animation is scoped, snappy, and semantically correct
 function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
   const [shake, setShake] = useState(false);
 
@@ -31,7 +36,7 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
 
     const interval = setInterval(() => {
       setShake(true);
-      setTimeout(() => setShake(false), 600);
+      setTimeout(() => setShake(false), 450);
     }, 4000);
 
     return () => clearInterval(interval);
@@ -64,7 +69,7 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
 
     return {
       icon: '🌟',
-      text: 'La file d\'attente est ouverte - Rejoignez maintenant',
+      text: 'La file d\'attente est ouverte',
       className: 'bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-emerald-200'
     };
   };
@@ -72,11 +77,28 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
   const status = getStatus();
 
   return (
-    <Alert className={`${status.className} ${shake ? "shake-glow" : ""}`}>
-      <AlertDescription className="text-center font-semibold text-lg">
-        {status.icon} {status.text}
-      </AlertDescription>
-    </Alert>
+    <>
+      <Alert className={`${status.className} ${shake ? 'banner-shake' : ''}`}>
+        <AlertDescription className="text-center font-semibold text-base">
+          {status.icon} {status.text}
+        </AlertDescription>
+      </Alert>
+      <style>{`
+        @keyframes banner-shake {
+          0%   { transform: translateX(0);    }
+          12%  { transform: translateX(-5px); }
+          25%  { transform: translateX(5px);  }
+          38%  { transform: translateX(-4px); }
+          52%  { transform: translateX(3px);  }
+          65%  { transform: translateX(-2px); }
+          78%  { transform: translateX(2px);  }
+          100% { transform: translateX(0);    }
+        }
+        .banner-shake {
+          animation: banner-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+      `}</style>
+    </>
   );
 }
 
@@ -240,7 +262,6 @@ function QueueStatus({ firstName, lastName, phoneNumber, userNumber, peopleAhead
 
 // ===== COMPONENT 4: PROGRESS SECTION =====
 function ProgressSection({ initialPeopleAhead, peopleAhead }) {
-  // Calculate progress based on user's personal queue progress
   const served = Math.max(0, initialPeopleAhead - peopleAhead);
   const progress = initialPeopleAhead > 0 ? (served / initialPeopleAhead) * 100 : 0;
   
@@ -298,7 +319,6 @@ export default function BarberQueueClient() {
   const [notificationsGranted, setNotificationsGranted] = useState(false);
   const [lastNotifiedState, setLastNotifiedState] = useState<'none' | 'almost' | 'next'>('none');
   
-  // AlertDialog states
   const [alertDialog, setAlertDialog] = useState({
     open: false,
     title: '',
@@ -307,7 +327,6 @@ export default function BarberQueueClient() {
     showCancel: false,
   });
 
-  // Feedback states
   const [showFeedback, setShowFeedback] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -318,7 +337,6 @@ export default function BarberQueueClient() {
   const isNext = peopleAhead === 0 && inQueue;
   const isAlmostNext = peopleAhead <= 1 && peopleAhead > 0 && inQueue;
 
-  // Allow natural scrolling
   useEffect(() => {
     document.body.style.overflow = "auto";
   }, []);
@@ -462,29 +480,18 @@ export default function BarberQueueClient() {
         setUserPosition(data.position);
       }
   
-      // Handle different status changes
       if (data.status === "done") {
         localStorage.removeItem("queueClient");
         setInQueue(false);
         setClientId("");
         setUserNumber(null);
         setUserPosition(null);
-        
-        // Show feedback dialog
         setShowFeedback(true);
+
       } else if (data.status === "no_show") {
-        // Send push notification if enabled
+        // ── CHANGE 3: use QueueNotifications helper instead of raw new Notification()
         if (canSendNotifications()) {
-          try {
-            new Notification("Melek Coiff - File d'Attente", {
-              body: "Vous avez été marqué comme absent après 3 reports.",
-              icon: "/log.png",
-              badge: "/log.png",
-              tag: "queue-no-show",
-            });
-          } catch (error) {
-            console.log("Notification failed:", error);
-          }
+          QueueNotifications.notifyNoShow();
         }
         
         localStorage.removeItem("queueClient");
@@ -502,22 +509,13 @@ export default function BarberQueueClient() {
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
+
       } else if (data.status === "removed_by_admin") {
-        // Get the removal reason
         const reason = data.removalReason || "Aucune raison spécifiée";
-        
-        // Send push notification if enabled
+
+        // ── CHANGE 4: use QueueNotifications helper instead of raw new Notification()
         if (canSendNotifications()) {
-          try {
-            new Notification("Melek Coiff - File d'Attente", {
-              body: `Vous avez été retiré de la file. Raison: ${reason}`,
-              icon: "/log.png",
-              badge: "/log.png",
-              tag: "queue-removed",
-            });
-          } catch (error) {
-            console.log("Notification failed:", error);
-          }
+          QueueNotifications.notifyRemovedByAdmin(reason);
         }
         
         localStorage.removeItem("queueClient");
@@ -543,9 +541,7 @@ export default function BarberQueueClient() {
               <a 
                 href="tel:+21652265816" 
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+                onClick={(e) => { e.stopPropagation(); }}
               >
                 <PhoneCall className="w-4 h-4" />
                 Appeler le salon
@@ -555,8 +551,8 @@ export default function BarberQueueClient() {
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
+
       } else if (data.status === "left") {
-        // Handle if they left the queue themselves
         localStorage.removeItem("queueClient");
         setInQueue(false);
         setClientId("");
@@ -575,12 +571,12 @@ export default function BarberQueueClient() {
     if (inQueue && clientId && firstName && lastName && phoneNumber && userNumber && userPosition) {
       const clientData = {
         id: clientId,
-        firstName: firstName,
-        lastName: lastName,
-        phoneNumber: phoneNumber,
+        firstName,
+        lastName,
+        phoneNumber,
         number: userNumber,
         position: userPosition,
-        initialPeopleAhead: initialPeopleAhead,
+        initialPeopleAhead,
         joinedAt: new Date().toISOString()
       };
       localStorage.setItem('queueClient', JSON.stringify(clientData));
@@ -618,15 +614,11 @@ export default function BarberQueueClient() {
       const clientData = await runTransaction(db, async (transaction) => {
         const queueSnap = await transaction.get(queueRef);
   
-        if (!queueSnap.exists()) {
-          throw new Error("File d'attente non initialisée");
-        }
+        if (!queueSnap.exists()) throw new Error("File d'attente non initialisée");
   
         const queueData = queueSnap.data();
   
-        if (!queueData.queueOpen) {
-          throw new Error("La file d'attente est fermée");
-        }
+        if (!queueData.queueOpen) throw new Error("La file d'attente est fermée");
   
         const nextNumber = (queueData.lastNumber ?? 0) + 1;
         const nextPosition = nextNumber;
@@ -639,9 +631,9 @@ export default function BarberQueueClient() {
   
         const newClient = {
           id: clientId,
-          firstName: firstName,
-          lastName: lastName,
-          phoneNumber: phoneNumber,
+          firstName,
+          lastName,
+          phoneNumber,
           number: nextNumber,
           position: nextPosition,
           status: "waiting",
@@ -713,7 +705,6 @@ export default function BarberQueueClient() {
                   status: 'left',
                   leftAt: serverTimestamp(),
                 });
-                
                 transaction.update(queueRef, {
                   currentPosition: currentPosition + 1,
                   updatedAt: serverTimestamp(),
@@ -728,7 +719,6 @@ export default function BarberQueueClient() {
           }
 
           localStorage.removeItem('queueClient');
-          
           setInQueue(false);
           setClientId('');
           setUserNumber(null);
@@ -779,9 +769,6 @@ export default function BarberQueueClient() {
         submittedAt: serverTimestamp(),
       });
       
-      console.log(`✅ Feedback soumis: ${rating} étoiles`);
-      
-      // Close feedback dialog and show thank you
       setShowFeedback(false);
       setAlertDialog({
         open: true,
@@ -789,7 +776,6 @@ export default function BarberQueueClient() {
         description: '✅ Votre avis a été enregistré. Merci pour votre retour !',
         action: () => {
           setAlertDialog(prev => ({ ...prev, open: false }));
-          // Reset feedback state
           setRating(0);
           setReview('');
         },
@@ -825,19 +811,12 @@ export default function BarberQueueClient() {
   if (loading) {
     return (
       <>
-        {/* Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Raleway:wght@300;400;600;700&family=Lora:wght@400;500&family=Orbitron:wght@700;900&family=Amiri:wght@400;700&display=swap"
           rel="stylesheet"
         />
-        
-        {/* REFACTORED: Natural document flow, no fake containers */}
         <div className="relative min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Scissors className="w-16 h-16 text-amber-400 animate-pulse mx-auto mb-4" />
@@ -852,23 +831,15 @@ export default function BarberQueueClient() {
   
   return (
     <>
-      {/* Google Fonts */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossOrigin="anonymous"
-      />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Raleway:wght@300;400;600;700&family=Lora:wght@400;500&family=Orbitron:wght@700;900&family=Amiri:wght@400;700&display=swap"
         rel="stylesheet"
       />
       
-      {/* REFACTORED STRUCTURE: Natural document flow */}
-      {/* Background is now in layout.tsx, not here */}
       <div className="relative z-10">
-        {/* Safe area padding */}
-        <div className="max-w-md mx-auto px-4 py-6 text-center" style={{
+        <div className="max-w-md mx-auto px-4 text-center" style={{
           paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
         }}>
           <div className="flex items-center justify-center gap-4 mb-3">
@@ -897,7 +868,6 @@ export default function BarberQueueClient() {
           </div>
         </div>
         
-        {/* Main content area - natural scroll */}
         <div className="max-w-md mx-auto px-4 py-6 space-y-6" style={{
           paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))'
         }}>
@@ -950,49 +920,24 @@ export default function BarberQueueClient() {
               </p>
 
               <div className="flex justify-center gap-6">
-                <a
-                  href="https://www.instagram.com/mvleek__coiff_93/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="icon-btn"
-                  aria-label="Instagram"
-                >
+                <a href="https://www.instagram.com/mvleek__coiff_93/" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="Instagram">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                     <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                   </svg>
                 </a>
-
-                <a
-                  href="https://www.facebook.com/malek.boulares.50"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="icon-btn"
-                  aria-label="Facebook"
-                >
+                <a href="https://www.facebook.com/malek.boulares.50" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="Facebook">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                   </svg>
                 </a>
-
-                <a 
-                  href="tel:+21652265816" 
-                  className="icon-btn"
-                  aria-label="Phone"
-                >
+                <a href="tel:+21652265816" className="icon-btn" aria-label="Phone">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                   </svg>
                 </a>
-
-                <a
-                  href="https://maps.app.goo.gl/XQp8N7fo7aTGjnRi7"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="icon-btn"
-                  aria-label="Location"
-                >
+                <a href="https://maps.app.goo.gl/XQp8N7fo7aTGjnRi7" target="_blank" rel="noopener noreferrer" className="icon-btn" aria-label="Location">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
@@ -1001,14 +946,10 @@ export default function BarberQueueClient() {
               </div>
             </div>
 
-            {/* Ramadan */}
             <div className="flex items-center justify-center gap-4 text-white pb-8">
               <span className="text-2xl">🌙</span>
               <div className="h-px bg-white/40 w-16 md:w-24" />
-              <span
-                className="text-lg md:text-xl"
-                style={{ fontFamily: '"Amiri", serif' }}
-              >
+              <span className="text-lg md:text-xl" style={{ fontFamily: '"Amiri", serif' }}>
                 رمضان كريم
               </span>
               <div className="h-px bg-white/40 w-16 md:w-24" />
@@ -1016,18 +957,19 @@ export default function BarberQueueClient() {
             </div>
           </div>
         </div>
-        
-        {inQueue && (
-          <NotificationPrompt
-            userName={`${firstName} ${lastName}`}
-            onPermissionChange={(granted) => {
-              setNotificationsGranted(granted);
-            }}
-          />
-        )}
       </div>
 
-      {/* AlertDialog - UNCHANGED */}
+      {/* ── CHANGE 2: NotificationPrompt moved outside the scrollable div.
+          It renders position:fixed internally — placing it inside an
+          overflow container caused it to be clipped and mispositioned. */}
+      {inQueue && (
+        <NotificationPrompt
+          userName={`${firstName} ${lastName}`}
+          onPermissionChange={(granted) => setNotificationsGranted(granted)}
+        />
+      )}
+
+      {/* AlertDialog */}
       <AlertDialog open={alertDialog.open} onOpenChange={(open) => {
         if (!open && !alertDialog.showCancel) {
           setAlertDialog(prev => ({ ...prev, open: false }));
@@ -1053,11 +995,7 @@ export default function BarberQueueClient() {
               </AlertDialogCancel>
             )}
             <AlertDialogAction
-              onClick={() => {
-                if (alertDialog.action) {
-                  alertDialog.action();
-                }
-              }}
+              onClick={() => { if (alertDialog.action) alertDialog.action(); }}
               className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black hover:from-amber-500 hover:via-yellow-400 hover:to-amber-500 shadow-lg hover:shadow-amber-500/50 transition-all duration-200 rounded-xl h-11 px-6 font-bold"
               style={{ fontFamily: '"Raleway", sans-serif' }}
             >
@@ -1067,7 +1005,7 @@ export default function BarberQueueClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Feedback Dialog - UNCHANGED */}
+      {/* Feedback Dialog */}
       <AlertDialog open={showFeedback} onOpenChange={setShowFeedback}>
         <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md">
           <AlertDialogHeader className="space-y-3">
@@ -1080,7 +1018,6 @@ export default function BarberQueueClient() {
           </AlertDialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Star Rating */}
             <div className="flex justify-center gap-2 space-y-2 text-center">
               <StarRating 
                 defaultValue={3}
@@ -1088,7 +1025,6 @@ export default function BarberQueueClient() {
               />
             </div>
 
-            {/* Review Text Area */}
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
                 Avis (optionnel)
@@ -1124,7 +1060,6 @@ export default function BarberQueueClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Icon Button Styles */}
       <style jsx>{`
         .icon-btn {
           width: 50px;
@@ -1138,7 +1073,6 @@ export default function BarberQueueClient() {
           transition: all 0.3s ease;
           color: white;
         }
-
         .icon-btn:hover {
           background: rgba(251, 191, 36, 0.2);
           border-color: #fbbf24;
