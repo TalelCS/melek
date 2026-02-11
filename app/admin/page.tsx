@@ -1622,8 +1622,9 @@ export default function BarberQueueAdmin() {
 
         {/* Content - Scrollable */}
         <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden pb-32">
-          <AdminHeader queueOpen={queueOpen} currentView={currentView} />
-          
+          <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+            <AdminHeader queueOpen={queueOpen} currentView={currentView} />
+          </div>          
           <div className="max-w-2xl mx-auto px-4 py-6">
             {currentView === 'controls' && (
               <ControlsTab
@@ -1666,8 +1667,9 @@ export default function BarberQueueAdmin() {
           </div>
 
           {/* Dock Navigation - Mobile Optimized */}
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4">
-            <Dock 
+          <div className="fixed left-1/2 -translate-x-1/2 z-50 px-4" style={{
+  bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
+}}>            <Dock 
               items={dockItems}
               panelHeight={68}
               baseItemSize={50}

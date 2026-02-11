@@ -205,3 +205,17 @@
       min-height: 100%;
     }
   }
+
+  /* Fix for bottom safe area - extend background */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  /* Ensure containers extend into bottom safe area */
+  .fixed.inset-0,
+  .absolute.inset-0 {
+    bottom: calc(-1 * env(safe-area-inset-bottom));
+  }
+  
+  /* Add padding to scrollable content instead */
+  .overflow-y-auto {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

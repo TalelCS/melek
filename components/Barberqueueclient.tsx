@@ -883,7 +883,9 @@ export default function BarberQueueClient() {
 
         {/* Scrollable Content Container */}
         <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
-          <div className="max-w-md mx-auto px-4 py-6 text-center">
+          <div className="max-w-md mx-auto px-4 py-6 text-center" style={{
+            paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
+          }}>
             <div className="flex items-center justify-center gap-4 mb-3">
               <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg flex items-center justify-center">
                 <img src="/log.png" alt="Melek Coiff" className="w-full h-full object-contain rounded-md" />
