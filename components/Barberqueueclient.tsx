@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Scissors, Clock, Users, AlertCircle, PhoneCall } from 'lucide-react';
+import { Scissors, Clock, Users, AlertCircle, PhoneCall, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { doc, onSnapshot, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction, getDocs } from 'firebase/firestore';
 import { collection, query, where, onSnapshot as onSnapshotCollection } from 'firebase/firestore';
 import InstallPWA from '@/components/installPWA';
@@ -321,8 +321,8 @@ export default function BarberQueueClient() {
   
   const [alertDialog, setAlertDialog] = useState({
     open: false,
-    title: '',
-    description: '',
+    title: '' as string | React.ReactNode,
+    description: '' as string | React.ReactNode,
     action: null as (() => void) | null,
     showCancel: false,
   });
@@ -466,8 +466,13 @@ export default function BarberQueueClient() {
         setPhoneNumber("");
         setAlertDialog({
           open: true,
-          title: 'Retiré de la file',
-          description: '⚠️ Vous avez été retiré de la file d\'attente. Veuillez vous réinscrire si nécessaire.',
+          title: (
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+              <span>Retiré de la file</span>
+            </div>
+          ),
+          description: 'Vous avez été retiré de la file d\'attente. Veuillez vous réinscrire si nécessaire.',
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
@@ -504,8 +509,13 @@ export default function BarberQueueClient() {
         setPhoneNumber("");
         setAlertDialog({
           open: true,
-          title: 'Absence signalée',
-          description: '⚠️ Vous avez été marqué comme absent après 3 reports. Veuillez parler au coiffeur si c\'était une erreur.',
+          title: (
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-red-400" />
+              <span>Absence signalée</span>
+            </div>
+          ),
+          description: 'Vous avez été marqué comme absent après 3 reports. Veuillez parler au coiffeur si c\'était une erreur.',
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
@@ -529,10 +539,15 @@ export default function BarberQueueClient() {
         
         setAlertDialog({
           open: true,
-          title: 'Retiré par l\'administrateur',
+          title: (
+            <div className="flex items-center gap-3">
+              <XCircle className="w-6 h-6 text-red-400" />
+              <span>Retiré par l'administrateur</span>
+            </div>
+          ),
           description: (
             <div className="space-y-3">
-              <p>⚠️ Vous avez été retiré de la file d'attente par l'administrateur.</p>
+              <p>Vous avez été retiré de la file d'attente par l'administrateur.</p>
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                 <p className="text-sm font-semibold text-amber-400 mb-1">Raison:</p>
                 <p className="text-sm text-white">{reason}</p>
@@ -600,8 +615,13 @@ export default function BarberQueueClient() {
       if (!duplicates.empty) {
         setAlertDialog({
           open: true,
-          title: 'Numéro déjà utilisé',
-          description: '⚠️ Ce numéro de téléphone est déjà dans la file d\'attente !',
+          title: (
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-6 h-6 text-amber-400" />
+              <span>Numéro déjà utilisé</span>
+            </div>
+          ),
+          description: 'Ce numéro de téléphone est déjà dans la file d\'attente !',
           action: () => setAlertDialog(prev => ({ ...prev, open: false })),
           showCancel: false,
         });
@@ -674,7 +694,12 @@ export default function BarberQueueClient() {
       console.error("❌ Join queue failed:", err);
       setAlertDialog({
         open: true,
-        title: 'Erreur',
+        title: (
+          <div className="flex items-center gap-3">
+            <XCircle className="w-6 h-6 text-red-400" />
+            <span>Erreur</span>
+          </div>
+        ),
         description: err.message || "Échec de l'inscription à la file d'attente",
         action: () => setAlertDialog(prev => ({ ...prev, open: false })),
         showCancel: false,
@@ -687,7 +712,12 @@ export default function BarberQueueClient() {
   const handleLeaveQueue = async () => {
     setAlertDialog({
       open: true,
-      title: 'Quitter la file',
+      title: (
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-6 h-6 text-amber-400" />
+          <span>Quitter la file</span>
+        </div>
+      ),
       description: 'Êtes-vous sûr de vouloir quitter la file d\'attente ?',
       showCancel: true,
       action: async () => {
@@ -748,12 +778,16 @@ export default function BarberQueueClient() {
     if (rating === 0) {
       setAlertDialog({
         open: true,
-        title: 'Évaluation requise',
+        title: (
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-400" />
+            <span>Évaluation requise</span>
+          </div>
+        ),
         description: 'Veuillez sélectionner une note avant de soumettre.',
         action: () => setAlertDialog(prev => ({ ...prev, open: false })),
         showCancel: false,
       });
-      return;
     }
 
     try {
@@ -772,8 +806,13 @@ export default function BarberQueueClient() {
       setShowFeedback(false);
       setAlertDialog({
         open: true,
-        title: 'Merci !',
-        description: '✅ Votre avis a été enregistré. Merci pour votre retour !',
+        title: (
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-400" />
+            <span>Merci !</span>
+          </div>
+        ),
+        description: 'Votre avis a été enregistré. Merci pour votre retour !',
         action: () => {
           setAlertDialog(prev => ({ ...prev, open: false }));
           setRating(0);
@@ -785,7 +824,12 @@ export default function BarberQueueClient() {
       console.error('❌ Échec de soumission:', error);
       setAlertDialog({
         open: true,
-        title: 'Erreur',
+        title: (
+          <div className="flex items-center gap-3">
+            <XCircle className="w-6 h-6 text-red-400" />
+            <span>Erreur</span>
+          </div>
+        ),
         description: 'Échec de l\'envoi de votre avis. Veuillez réessayer.',
         action: () => setAlertDialog(prev => ({ ...prev, open: false })),
         showCancel: false,
@@ -801,8 +845,13 @@ export default function BarberQueueClient() {
     setReview('');
     setAlertDialog({
       open: true,
-      title: 'Service terminé',
-      description: '✅ Votre service est terminé ! Merci.',
+      title: (
+        <div className="flex items-center gap-3">
+          <CheckCircle className="w-6 h-6 text-emerald-400" />
+          <span>Service terminé</span>
+        </div>
+      ),
+      description: 'Votre service est terminé ! Merci.',
       action: () => setAlertDialog(prev => ({ ...prev, open: false })),
       showCancel: false,
     });
@@ -975,7 +1024,7 @@ export default function BarberQueueClient() {
           setAlertDialog(prev => ({ ...prev, open: false }));
         }
       }}>
-        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md">
+        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md mx-4">
           <AlertDialogHeader className="space-y-3">
             <AlertDialogTitle className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 bg-clip-text text-transparent" style={{ fontFamily: '"Playfair Display", serif' }}>
               {alertDialog.title}
@@ -1009,9 +1058,12 @@ export default function BarberQueueClient() {
       <AlertDialog open={showFeedback} onOpenChange={setShowFeedback}>
         <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md">
           <AlertDialogHeader className="space-y-3">
-            <AlertDialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 bg-clip-text text-transparent" style={{ fontFamily: '"Playfair Display", serif' }}>
-              Service Terminé ✅
-            </AlertDialogTitle>
+          <AlertDialogTitle className="text-2xl font-bold text-center" style={{ fontFamily: '"Playfair Display", serif' }}>
+            <div className="flex items-center justify-center gap-3 bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 bg-clip-text text-transparent">
+              <CheckCircle className="w-7 h-7 text-emerald-400" style={{ WebkitTextFillColor: 'initial' }} />
+              <span>Service Terminé</span>
+            </div>
+          </AlertDialogTitle>
             <AlertDialogDescription className="text-zinc-300 text-base leading-relaxed text-center" style={{ fontFamily: '"Raleway", sans-serif' }}>
               Merci d'avoir utilisé notre service ! Comment évalueriez-vous votre expérience ?
             </AlertDialogDescription>
