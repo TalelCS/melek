@@ -1603,7 +1603,7 @@ export default function BarberQueueAdmin() {
   return (
     <>
         {/* Content - Scrollable */}
-        <div className="relative z-10">
+        <div className="relative z-10 min-h-screen">
           <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
             <AdminHeader queueOpen={queueOpen} currentView={currentView} />
           </div>

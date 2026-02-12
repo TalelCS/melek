@@ -61,7 +61,7 @@ export default function NotificationPrompt({ userName, onPermissionChange }: Not
       onPermissionChange?.(true);
       handleDismissAnimated(() => {
         setShowPrompt(false);
-        setTimeout(() => QueueNotifications.testNotification(), 200);
+        setTimeout(() => QueueNotifications.testNotification(), 5000);
       });
     } else {
       saveNotificationPreference(false);
