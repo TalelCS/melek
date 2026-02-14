@@ -1731,7 +1731,7 @@ export default function BarberQueueAdmin() {
           setAlertDialog(prev => ({ ...prev, open: false }));
         }
       }}>
-        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md mx-4">
+        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md mx-8">
           <AlertDialogHeader className="space-y-3">
             <AlertDialogTitle className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 bg-clip-text text-transparent" style={{ fontFamily: '"Playfair Display", serif' }}>
               {alertDialog.title}

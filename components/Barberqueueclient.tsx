@@ -23,12 +23,8 @@ import { QueueNotifications, canSendNotifications } from '@/lib/notifications';
 import { StarRating } from "@/components/ui/star-rating";
 import { db } from '@/lib/firebase';
 
-// ── CHANGE 1: StatusBanner now uses a self-contained banner-shake animation
-// instead of the global shake-glow class. Reasons:
-//   - shake-glow applies a green box-shadow (success colour) on an error state
-//   - box-shadow on the Alert wrapper bleeds outside its border, looking messy
-//   - The new animation is scoped, snappy, and semantically correct
-function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
+// ===== COMPONENT 1: STATUS BANNER =====
+function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext, isFirstWaiting }) {
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
@@ -48,6 +44,14 @@ function StatusBanner({ queueOpen, inQueue, isNext, isAlmostNext }) {
         icon: '🌙',
         text: 'La file d\'attente est fermée',
         className: 'bg-red-500/10 backdrop-blur-md border border-red-500/20 text-red-200'
+      };
+    }
+
+    if (isFirstWaiting) {
+      return {
+        icon: '⭐',
+        text: 'Vous êtes le premier - Le service commencera bientôt',
+        className: 'bg-blue-500/10 backdrop-blur-md border border-blue-500/20 text-blue-200'
       };
     }
 
@@ -200,7 +204,7 @@ function JoinQueueForm({ firstName, setFirstName, lastName, setLastName, phoneNu
 }
 
 // ===== COMPONENT 3: QUEUE STATUS =====
-function QueueStatus({ firstName, lastName, phoneNumber, userNumber, peopleAhead, estimatedWait, onLeave, leaving }) {
+function QueueStatus({ firstName, lastName, phoneNumber, userNumber, peopleAhead, estimatedWait, onLeave, leaving, currentPosition }) {
   return (
     <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl">
       <CardHeader className="pb-4">
@@ -213,7 +217,10 @@ function QueueStatus({ firstName, lastName, phoneNumber, userNumber, peopleAhead
         <div className="space-y-6">
           <div className="text-center">
             <p className="text-sm text-white/60 mb-2" style={{ fontFamily: '"Raleway", sans-serif' }}>
-              Votre numéro de ticket {firstName} est
+              {currentPosition === 0 
+                ? "Le service n'a pas encore commencé" 
+                : `Votre numéro de ticket ${firstName} est`
+              }
             </p>
             <div className="text-7xl font-bold bg-gradient-to-br from-amber-400 to-yellow-500 bg-clip-text text-transparent my-4" style={{ fontFamily: '"Orbitron", monospace' }}>
               #{userNumber}
@@ -334,8 +341,11 @@ export default function BarberQueueClient() {
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   
   const estimatedWait = peopleAhead * avgServiceTime;
-  const isNext = peopleAhead === 0 && inQueue;
-  const isAlmostNext = peopleAhead <= 1 && peopleAhead > 0 && inQueue;
+  // ✅ FIXED: Only show "your turn" if service has actually started (currentPosition > 0)
+  const isNext = peopleAhead === 0 && inQueue && currentPosition > 0;
+  const isAlmostNext = peopleAhead <= 1 && peopleAhead > 0 && inQueue && currentPosition > 0;
+  // ✅ NEW: Special state for first in line before service starts
+  const isFirstWaiting = userPosition === 1 && currentPosition === 0 && inQueue;
 
   useEffect(() => {
     document.body.style.overflow = "auto";
@@ -390,6 +400,9 @@ export default function BarberQueueClient() {
   useEffect(() => {
     if (!inQueue || !notificationsGranted || !canSendNotifications()) return;
   
+    // ✅ FIXED: Only notify if service has started
+    if (currentPosition === 0) return;
+  
     let currentState: 'none' | 'almost' | 'next' = 'none';
     
     if (peopleAhead === 0) {
@@ -411,7 +424,7 @@ export default function BarberQueueClient() {
     if (currentState === 'none' && lastNotifiedState !== 'none') {
       setLastNotifiedState('none');
     }
-  }, [peopleAhead, inQueue, notificationsGranted, firstName, lastName, userNumber, lastNotifiedState]);
+  }, [peopleAhead, inQueue, notificationsGranted, firstName, lastName, userNumber, lastNotifiedState, currentPosition]);
 
   useEffect(() => {
     if (!inQueue || !userPosition) return;
@@ -494,7 +507,6 @@ export default function BarberQueueClient() {
         setShowFeedback(true);
 
       } else if (data.status === "no_show") {
-        // ── CHANGE 3: use QueueNotifications helper instead of raw new Notification()
         if (canSendNotifications()) {
           QueueNotifications.notifyNoShow();
         }
@@ -523,7 +535,6 @@ export default function BarberQueueClient() {
       } else if (data.status === "removed_by_admin") {
         const reason = data.removalReason || "Aucune raison spécifiée";
 
-        // ── CHANGE 4: use QueueNotifications helper instead of raw new Notification()
         if (canSendNotifications()) {
           QueueNotifications.notifyRemovedByAdmin(reason);
         }
@@ -925,6 +936,7 @@ export default function BarberQueueClient() {
             inQueue={inQueue}
             isNext={isNext}
             isAlmostNext={isAlmostNext}
+            isFirstWaiting={isFirstWaiting}
           />
           
           {!inQueue ? (
@@ -949,6 +961,7 @@ export default function BarberQueueClient() {
               estimatedWait={estimatedWait}
               onLeave={handleLeaveQueue}
               leaving={leaving}
+              currentPosition={currentPosition}
             />
           )}
           
@@ -1008,9 +1021,7 @@ export default function BarberQueueClient() {
         </div>
       </div>
 
-      {/* ── CHANGE 2: NotificationPrompt moved outside the scrollable div.
-          It renders position:fixed internally — placing it inside an
-          overflow container caused it to be clipped and mispositioned. */}
+      {/* NotificationPrompt moved outside the scrollable div */}
       {inQueue && (
         <NotificationPrompt
           userName={`${firstName} ${lastName}`}
@@ -1024,7 +1035,7 @@ export default function BarberQueueClient() {
           setAlertDialog(prev => ({ ...prev, open: false }));
         }
       }}>
-        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md mx-4">
+        <AlertDialogContent className="bg-gradient-to-br from-zinc-950/98 via-neutral-900/98 to-zinc-950/98 backdrop-blur-xl border-2 border-amber-500/20 shadow-2xl shadow-amber-500/10 rounded-2xl max-w-md mx-8">
           <AlertDialogHeader className="space-y-3">
             <AlertDialogTitle className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-200 bg-clip-text text-transparent" style={{ fontFamily: '"Playfair Display", serif' }}>
               {alertDialog.title}
