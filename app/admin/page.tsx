@@ -1278,7 +1278,28 @@ export default function BarberQueueAdmin() {
               setActionLoading(true);
               setAlertDialog(prev => ({ ...prev, open: false }));
               
-              // ... existing reset logic ...
+              // GET ALL CLIENTS AND DELETE THEM
+              const clientsRef = collection(db, "queues", "today", "clients");
+              const clientsSnapshot = await getDocs(clientsRef);
+              
+              const batch = writeBatch(db);
+              
+              clientsSnapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+              });
+              
+              await batch.commit();
+              
+              // RESET QUEUE METADATA
+              const queueRef = doc(db, "queues", "today");
+              await updateDoc(queueRef, {
+                currentPosition: 0,
+                lastNumber: 0,
+                avgServiceTime: 15,
+                updatedAt: serverTimestamp()
+              });
+              
+              console.log('✅ File réinitialisée avec succès');
               
               setAlertDialog({
                 open: true,
